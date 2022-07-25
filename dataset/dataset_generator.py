@@ -1,14 +1,37 @@
+import pandas as pd
 import tensorflow as tf
+
+from cfg.plan_config import TrainPlan
+
+
+def read_features(path, min_size, max_size):
+    img = tf.io.read_file(path[0])
+    img = tf.image.decode_jpeg(img, channels=3)
+    w, h, c = img.shape
+    scale1 = min_size / min(h, w)
+    scale2 = max_size / max(h, w)
+    scale = min(scale1, scale2)
+    img = tf.image.resize(img, (w * scale, h * scale))
+    img = img / 255.
+    return img
 
 
 class DatasetGenerator(object):
     def __init__(self, train_plan):
         self.train_plan = train_plan
+        image_files = pd.read_csv(train_plan.image_index_file, header=None)
 
-    def read_features(self, path):
-        return tf.ones(shape=[416, 416, 3])
+        ds_image_path = tf.data.Dataset.from_tensor_slices(image_files)
+        self.ds_image = ds_image_path.map(self.wrap_read_features)
 
-    def encode_labels(self, path):
+    def wrap_read_features(self, filename):
+        min_size = self.train_plan.min_size
+        max_size = self.train_plan.max_size
+        img = tf.py_function(read_features, inp=[filename, min_size, max_size], Tout=[tf.float32])
+        return img[0]
+
+    @staticmethod
+    def encode_labels(path):
         return tf.ones(shape=[20])
 
     def __str__(self):
@@ -19,5 +42,7 @@ class DatasetGenerator(object):
 
 
 if __name__ == "__main__":
-    data_g = DatasetGenerator("", "")
-    print(data_g)
+    tp = TrainPlan("../cfg/voc_train.yml")
+    data_g = DatasetGenerator(tp)
+    for x in data_g.ds_image.take(1):
+        print(x)

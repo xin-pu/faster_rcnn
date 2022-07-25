@@ -1,7 +1,7 @@
 
 # data
-image_index_file: r"F:\PASCALVOC\VOC2012\myData_train.txt"
-annot_encode_folder: r"F:\PASCALVOC\VOC2012\labels"
+image_index_file: F:\PASCALVOC\VOC2012\myData_train.txt
+annot_encode_folder: F:\PASCALVOC\VOC2012\labels
 min_size: 600
 max_size: 1000
 labels: [ "aeroplane",  "bicycle", "bird", "boat","bottle",

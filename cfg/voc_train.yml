@@ -1,0 +1,28 @@
+
+# data
+image_index_file: r"F:\PASCALVOC\VOC2012\myData_train.txt"
+annot_encode_folder: r"F:\PASCALVOC\VOC2012\labels"
+min_size: 600
+max_size: 1000
+labels: [ "aeroplane",  "bicycle", "bird", "boat","bottle",
+          "bus",    "car",  "cat",   "chair",   "cow",
+          "diningtable",  "dog",  "horse",  "motorbike",  "person",
+          "pottedplant", "sheep",   "sofa", "train", "tvmonitor" ]
+
+# enhance
+enhance: False
+
+# training
+epoch: 10
+batch_size: 64
+
+val_split: 0.1
+
+# loss
+rpn_sigma: 3.
+roi_sigma: 1.
+
+
+
+
+

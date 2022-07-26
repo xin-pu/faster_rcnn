@@ -34,28 +34,25 @@ if __name__ == "__main__":
         [ToTensor(),
          Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    train_ds = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
-    train_loader = DataLoader(train_ds, batch_size=4, shuffle=True, num_workers=2)
+    train_ds = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=transform)
+    train_loader = DataLoader(train_ds, batch_size=64, shuffle=True, num_workers=2)
 
-    test_ds = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
-    test_loader = DataLoader(test_ds, batch_size=4, shuffle=False, num_workers=2)
+    test_ds = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform)
+    test_loader = DataLoader(test_ds, batch_size=64, shuffle=False, num_workers=2)
 
-    dataiter = iter(train_loader)
-    images, labels = dataiter.__next__()
-    print(images)
-    print(labels)
+    net = Net().cuda()
 
-    net = Net()
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss().cuda()
     optimizer = optim.NAdam(net.parameters(), lr=0.001)
 
-    for epoch in range(10):  # loop over the dataset multiple times
+    for epoch in range(100):  # loop over the dataset multiple times
 
         running_loss = 0.0
         for i, data in enumerate(train_loader, 0):
             # get the inputs
             inputs, labels = data
-
+            inputs = inputs.cuda()
+            labels = labels.cuda()
             # zero the parameter gradients
             optimizer.zero_grad()
 
@@ -67,8 +64,7 @@ if __name__ == "__main__":
 
             # print statistics
             running_loss += loss.item()
-            if i % 2000 == 1999:  # print every 2000 mini-batches
-                print('[%d, %5d] loss: %.3f' % (epoch + 1, i + 1, running_loss / 2000))
-                running_loss = 0.0
-
+            ave_loss = running_loss / (i + 1)
+            print(end="\repoch: {}\tbatch {}\tloss {}".format(epoch, i, ave_loss))
+        print("\r\n")
     print('Finished Training')

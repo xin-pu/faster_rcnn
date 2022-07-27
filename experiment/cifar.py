@@ -34,10 +34,10 @@ if __name__ == "__main__":
         [ToTensor(),
          Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    train_ds = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=transform)
+    train_ds = torchvision.datasets.CIFAR10(root='../data', train=True, download=False, transform=transform)
     train_loader = DataLoader(train_ds, batch_size=64, shuffle=True, num_workers=2)
 
-    test_ds = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform)
+    test_ds = torchvision.datasets.CIFAR10(root='../data', train=False, download=False, transform=transform)
     test_loader = DataLoader(test_ds, batch_size=64, shuffle=False, num_workers=2)
 
     net = Net().cuda()
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = optim.NAdam(net.parameters(), lr=0.001)
 
-    for epoch in range(100):  # loop over the dataset multiple times
+    for epoch in range(10):  # loop over the dataset multiple times
 
         running_loss = 0.0
         for i, data in enumerate(train_loader, 0):
@@ -65,6 +65,8 @@ if __name__ == "__main__":
             # print statistics
             running_loss += loss.item()
             ave_loss = running_loss / (i + 1)
-            print(end="\repoch: {}\tbatch {}\tloss {}".format(epoch, i, ave_loss))
+            print(end="\rEpoch: {:05d}\tbatch: {:05d}\tloss: {:>.4f}".format(epoch, i, ave_loss))
         print("\r\n")
+
+    torch.save(net.state_dict(), "../save/cifar.pt")
     print('Finished Training')

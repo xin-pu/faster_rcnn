@@ -62,7 +62,7 @@ def generate_anchor_base(base_size=16,
     py = base_size / 2.
     px = base_size / 2.
 
-    anchor_base = torch.zeros((len(ratios) * len(anchor_scales), 4))
+    anchor_base = np.zeros((len(ratios) * len(anchor_scales), 4))
     for i in range(len(ratios)):
         for j in range(len(anchor_scales)):
             h = base_size * anchor_scales[j] * np.sqrt(ratios[i])
@@ -77,14 +77,14 @@ def generate_anchor_base(base_size=16,
 
 
 if __name__ == "__main__":
+    # feature shape should be [batch, 512, M, N]
+    # When Image size is [800,800] => M=50,N=50
+    # So RPN Input Unit is 512
     feature_extractor = get_feature_extractor()
     images = torch.Tensor(1, 3, 800, 800)
     features = feature_extractor(images)
     print(features)
-    # feature shape should be [batch, 512, M, N]
-    # When Image size is [800,800] => M=50,N=50
-    # So RPN Input Unit is 512
 
-    anchors = generate_anchor_base()
-    print(anchors)
     # anchors: [9,4]
+    anchors = generate_anchor_base(base_size=16)
+    print(anchors)

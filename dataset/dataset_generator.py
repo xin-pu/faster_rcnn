@@ -19,9 +19,9 @@ class ImageDataSet(Dataset):
         """
         self.train_plan = train_plan
 
-        self.image_files = image_files = pd.read_csv(train_plan.image_index_file, header=None).iloc[:, 0].values
-        self.annot_files = annot_files = self.get_annot_file(image_files)
-        self.len = image_files.__len__()
+        self.image_files = pd.read_csv(train_plan.image_index_file, header=None).iloc[:, 0].values
+        self.annot_files = self.get_annot_file(self.image_files)
+        self.len = self.image_files.__len__()
 
         self.transform = ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2)
 
@@ -39,6 +39,9 @@ class ImageDataSet(Dataset):
         image_file = self.image_files[index]
         annot_file = self.annot_files[index]
         image = cv2.imread(image_file, cv2.IMREAD_COLOR)
+        image = cv2.resize(image, (600, 600))
+        image = image / 255.
+        image = image.transpose(2, 0, 1)
         return image, torch.zeros(3)
 
     def __str__(self):
@@ -57,7 +60,4 @@ if __name__ == "__main__":
     dataset = ImageDataSet(trainPlan)
     dataloader = DataLoader(dataset, batch_size=64, shuffle=True)
     for images, targets in dataloader:
-        print(images)
-        print(targets)
-        print("-" * 20)
-
+        print(images.shape)

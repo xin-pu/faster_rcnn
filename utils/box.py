@@ -2,11 +2,12 @@ import numpy as np
 from numpy import ndarray
 
 
-def loc2bbox(pred_locations: ndarray, anchor: ndarray):
+def cvt_location_to_bbox(pred_locations: ndarray, anchor: ndarray):
     """
-
-    :param anchor:
-    :param pred_locations:
+    通过归一化处理后中间变量的准确值（就是模型预测的输出值）Pred Locations，与对应的候选框 Anchor
+    计算得到预测的实际框 [y1,x1,y2,x2]形式
+    :param anchor: 原始候选框 [y1,x1,y2,x2]
+    :param pred_locations: [ty,tx,th,tw] 归一化处理之后中间变量的准确值
     :return: [y1,x1,y2,x2]
     """
     if anchor.shape[0] == 0:
@@ -14,33 +15,33 @@ def loc2bbox(pred_locations: ndarray, anchor: ndarray):
 
     anchor = anchor.astype(anchor.dtype, copy=False)
 
-    anchor_height = anchor[:, 2] - anchor[:, 0]
-    anchor_width = anchor[:, 3] - anchor[:, 1]
-    anchor_center_x = anchor[:, 0] + 0.5 * anchor_height
-    anchor_center_y = anchor[:, 1] + 0.5 * anchor_width
+    ph = anchor[:, 2] - anchor[:, 0]
+    pw = anchor[:, 3] - anchor[:, 1]
+    px = anchor[:, 0] + 0.5 * ph
+    py = anchor[:, 1] + 0.5 * pw
 
-    dy = pred_locations[:, 0::4]
-    dx = pred_locations[:, 1::4]
-    dh = pred_locations[:, 2::4]
-    dw = pred_locations[:, 3::4]
+    ty = pred_locations[:, 0::4]
+    tx = pred_locations[:, 1::4]
+    th = pred_locations[:, 2::4]
+    tw = pred_locations[:, 3::4]
 
-    ctr_y = dy * anchor_height[:, np.newaxis] + anchor_center_x[:, np.newaxis]
-    ctr_x = dx * anchor_width[:, np.newaxis] + anchor_center_y[:, np.newaxis]
-    h = np.exp(dh) * anchor_height[:, np.newaxis]
-    w = np.exp(dw) * anchor_width[:, np.newaxis]
+    gy = ty * ph[:, np.newaxis] + px[:, np.newaxis]
+    gx = tx * pw[:, np.newaxis] + py[:, np.newaxis]
+    gh = np.exp(th) * ph[:, np.newaxis]
+    gw = np.exp(tw) * pw[:, np.newaxis]
 
-    dst_bbox = np.zeros(pred_locations.shape, dtype=pred_locations.dtype)
-    dst_bbox[:, 0::4] = ctr_y - 0.5 * h
-    dst_bbox[:, 1::4] = ctr_x - 0.5 * w
-    dst_bbox[:, 2::4] = ctr_y + 0.5 * h
-    dst_bbox[:, 3::4] = ctr_x + 0.5 * w
+    g_bbox = np.zeros(pred_locations.shape, dtype=pred_locations.dtype)
+    g_bbox[:, 0::4] = gy - 0.5 * gh
+    g_bbox[:, 1::4] = gx - 0.5 * gw
+    g_bbox[:, 2::4] = gy + 0.5 * gh
+    g_bbox[:, 3::4] = gx + 0.5 * gw
 
-    return dst_bbox
+    return g_bbox
 
 
 if __name__ == "__main__":
     anc = np.random.random(size=(1, 4))
     loc = np.zeros(shape=(1, 4))
-    d = loc2bbox(loc, anc)
+    d = cvt_location_to_bbox(loc, anc)
     print(anc)
     print(d)

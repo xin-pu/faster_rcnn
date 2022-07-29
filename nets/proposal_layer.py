@@ -86,8 +86,7 @@ class ProposalCreator(object):
         -- 尺寸裁剪至图像尺寸内
         1. 先按min_size_threshold抑制不符合的候选框
         2. 按pre_nms数量抑制
-        3. 按重合度nms_iou_thresh，非极大值抑制
-        4. 按post_nms数量抑制
+        3. 按重合度nms_iou_thresh，post_nms非极大值抑制
         -- 返回抑制后感兴趣框
         :param pred_locations: [Batch,50*50*9,4]
         :param objectness_score:[Batch,50*50*9]
@@ -124,7 +123,7 @@ class ProposalCreator(object):
         roi = roi[order, :]
         score = score[order]
 
-        # 非极大值抑制 根据Score >0.7 进行非极大值抑制
+        # 非极大值抑制 根据Score >0.7 取前n_post_nms个进行非极大值抑制
         keep = torchvision.ops.nms(torch.from_numpy(roi).cuda(),
                                    torch.from_numpy(score).cuda(),
                                    self.nms_iou_thresh)

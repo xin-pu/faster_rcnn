@@ -4,6 +4,7 @@ from torch.nn import functional as f
 import numpy as np
 
 from nets.backbone import generate_anchor_base, get_feature_extractor
+from nets.proposal_layer import ProposalCreator
 
 
 def enumerate_shifted_anchor(anchor_base, feat_stride, height, width):
@@ -47,7 +48,6 @@ class RegionProposalNetwork(nn.Module):
         super(RegionProposalNetwork, self).__init__()
 
         self.anchor_base = generate_anchor_base(anchor_scales=anchor_scales, ratios=ratios)
-        # self.proposal_layer = ProposalCreator(self, **proposal_creator_params)
         self.feat_stride = feat_stride
         self.n_anchor = n_anchor = self.anchor_base.shape[0]
 

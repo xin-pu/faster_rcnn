@@ -65,24 +65,25 @@ class RegionProposalNetwork(nn.Module):
 
     def forward(self, out_feature):
         # 模型前传
-        x = f.relu(self.conv(out_feature))  # Todo Relu is necessary ?
+        x = f.relu(self.conv(out_feature))
         pred_cls_scores = self.confidence_classify_layer(x)  # [B,50*50*9,2]
-        pred_anchor_locs = self.location_regression_layer(x)  # [B,50,50*9,4]
+        pred_locations = torch.sigmoid(self.location_regression_layer(x))  # [B,50,50*9,4]
+        # Todo Sigmoid or Softmax ?
 
         batch_size, _, height, width = out_feature.shape
 
-        pred_anchor_locs = pred_anchor_locs.permute(0, 2, 3, 1).contiguous().view(batch_size, -1, 4)  # [B,50*50*9,4]
+        pred_locations = pred_locations.permute(0, 2, 3, 1).contiguous().view(batch_size, -1, 4)  # [B,50*50*9,4]
 
         pred_cls_scores = pred_cls_scores.permute(0, 2, 3, 1).contiguous()  # [B,50,50,9,2]
 
         objectness_score = pred_cls_scores.view(batch_size, height, width, -1, 2)[:, :, :, :, 1] \
-            .contiguous().view(1, -1)
+            .contiguous().view(batch_size, -1)
         pred_cls_scores = pred_cls_scores.view(batch_size, -1, 2)
-        return pred_cls_scores, pred_anchor_locs, objectness_score
+        return pred_cls_scores, pred_locations, objectness_score
 
 
 if __name__ == "__main__":
-    image = torch.Tensor(1, 3, 800, 800)
+    image = torch.Tensor(2, 3, 800, 800)
     # [22500,4] = [50*50*9,4]
     fe = get_feature_extractor()
     feature = fe(image)

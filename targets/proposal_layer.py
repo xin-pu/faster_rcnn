@@ -4,7 +4,8 @@ import torchvision.ops
 from numpy import ndarray
 
 from nets.backbone import get_feature_extractor_classifier
-from nets.region_proposal_network import RegionProposalNetwork, enumerate_shifted_anchor
+from nets.region_proposal_network import RegionProposalNetwork
+from utils.anchor import enumerate_shifted_anchor
 
 
 def cvt_location_to_bbox(pred_locations: ndarray, anchor: ndarray):

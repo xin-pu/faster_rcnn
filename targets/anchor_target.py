@@ -1,4 +1,5 @@
 import numpy as np
+
 from utils.box import bbox_iou, cvt_bbox_to_location
 
 
@@ -124,4 +125,14 @@ class AnchorTargetCreator(object):
 
 
 if __name__ == "__main__":
-    pass
+    from utils.anchor import generate_anchor_base, enumerate_shifted_anchor
+
+    test_bbox = np.asarray([[20, 30, 400, 500], [300, 400, 500, 600]], dtype=np.float32)  # [y1, x1, y2, x2] format
+
+    ang_base = generate_anchor_base()
+    ang_pattern = enumerate_shifted_anchor(ang_base, 16, 50, 50)
+
+    at = AnchorTargetCreator()
+    locs, labs = at(test_bbox, ang_pattern, (800, 800))
+    print(locs.shape)
+    print(labs.shape)

@@ -1,7 +1,8 @@
 import torch
 from torch import nn
 from torchvision.models import vgg16, VGG16_Weights
-import numpy as np
+
+from utils.anchor import generate_anchor_base
 
 
 def get_feature_extractor_classifier():
@@ -28,26 +29,6 @@ def get_feature_extractor_classifier():
     classifier = nn.Sequential(*classifier)
 
     return feature_extractor, classifier
-
-
-def generate_anchor_base(base_size=16,
-                         ratios=(0.5, 1, 2),
-                         anchor_scales=(8, 16, 32)):
-    py = base_size / 2.
-    px = base_size / 2.
-
-    anchor_base = np.zeros((len(ratios) * len(anchor_scales), 4))
-    for i in range(len(ratios)):
-        for j in range(len(anchor_scales)):
-            h = base_size * anchor_scales[j] * np.sqrt(ratios[i])
-            w = base_size * anchor_scales[j] * np.sqrt(1. / ratios[i])
-
-            index = i * len(anchor_scales) + j
-            anchor_base[index, 0] = py - h / 2.
-            anchor_base[index, 1] = px - w / 2.
-            anchor_base[index, 2] = py + h / 2.
-            anchor_base[index, 3] = px + w / 2.
-    return anchor_base
 
 
 if __name__ == "__main__":

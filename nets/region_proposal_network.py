@@ -1,36 +1,9 @@
 import torch
 from torch import nn
 from torch.nn import functional as f
-import numpy as np
 
-from nets.backbone import generate_anchor_base, get_feature_extractor_classifier
-
-
-def enumerate_shifted_anchor(anchor_base, feat_stride, height, width):
-    """
-    Enumerate all shifted anchors:
-    add A anchors (1, A, 4) to
-    cell K shifts (K, 1, 4) to get
-    shift anchors (K, A, 4)
-    reshape to (K*A, 4) shifted anchors
-    return (K*A, 4)
-    :param anchor_base: 基础Anchor
-    :param feat_stride: 特征图每个格子对应的像素 ，如16*16
-    :param height: 输入特征的高
-    :param width: 输入特征的宽
-    :return:所有Anchor [Height*Width*A,4]
-    """
-
-    shift_y = np.arange(0, height * feat_stride, feat_stride)  # (0,800,16)
-    shift_x = np.arange(0, width * feat_stride, feat_stride)  # (0,800,16)
-    shift_x, shift_y = np.meshgrid(shift_x, shift_y)
-    shift = np.stack((shift_y.ravel(), shift_x.ravel(), shift_y.ravel(), shift_x.ravel()), axis=1)
-
-    a = anchor_base.shape[0]
-    k = shift.shape[0]
-    anchor = anchor_base.reshape((1, a, 4)) + shift.reshape((1, k, 4)).transpose((1, 0, 2))
-    anchor = anchor.reshape((k * a, 4))
-    return anchor
+from nets.backbone import get_feature_extractor_classifier
+from utils.anchor import generate_anchor_base
 
 
 # 候选框提取网络

@@ -38,7 +38,7 @@ if __name__ == "__main__":
     fe_extractor, cls = get_feature_extractor_classifier()
     images = torch.Tensor(1, 3, 800, 800)
     features = fe_extractor(images)
-    print(features)
+    print(features.shape)
 
     # anchors: [9,4]
     anchors = generate_anchor_base(base_size=16)

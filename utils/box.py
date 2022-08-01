@@ -111,9 +111,9 @@ def bbox_iou(bbox_a: ndarray, bbox_b: ndarray) -> ndarray:
 
 
 if __name__ == "__main__":
-    anc = np.array((0, 0, 1, 1), dtype=float).reshape((1, 4))
-    loc = np.array((0.1, 0.1, 0.5, 0.5), dtype=float).reshape((1, 4))
-    bbox = cvt_location_to_bbox(loc, anc)
-    loc = cvt_bbox_to_location(anc, bbox)
+    test_anchor = np.array((0, 0, 1, 1), dtype=float).reshape((1, 4))
+    test_location = np.array((0.1, 0.1, 0.5, 0.5), dtype=float).reshape((1, 4))
+    bbox = cvt_location_to_bbox(test_location, test_anchor)
+    loc = cvt_bbox_to_location(test_anchor, bbox)
     print(bbox)
     print(loc)

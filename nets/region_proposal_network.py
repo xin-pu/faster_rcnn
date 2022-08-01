@@ -38,8 +38,8 @@ class RegionProposalNetwork(nn.Module):
     def forward(self, x):
 
         x = f.relu(self.conv(x))
-        pred_cls_scores = self.confidence_classify_layer(x)  # [B,50*50*9,2]
-        pred_locations = torch.sigmoid(self.location_regression_layer(x))  # [B,50,50*9,4]
+        pred_cls_scores = torch.sigmoid(self.confidence_classify_layer(x))  # [B,50*50*9,2]
+        pred_locations = self.location_regression_layer(x)  # [B,50,50*9,4]
         # Todo Sigmoid or Softmax ?
 
         batch_size, _, height, width = x.shape
@@ -57,7 +57,7 @@ class RegionProposalNetwork(nn.Module):
 if __name__ == "__main__":
     image = torch.Tensor(2, 3, 800, 800)
     # [22500,4] = [50*50*9,4]
-    fe = get_feature_extractor_classifier()
+    fe, _ = get_feature_extractor_classifier()
     feature = fe(image)
 
     rpn = RegionProposalNetwork(512, 512)

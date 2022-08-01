@@ -4,8 +4,6 @@ import torch
 
 
 # Todo 对候选框区域的特征图为输入，预测目标框的类别概率和坐标
-
-
 class VGG16RoIHead(nn.Module):
     """
     目的是执行从不均匀大小到 固定大小的特征地图（feature maps） (例如 7×7)的输入的最大范围池。
@@ -57,7 +55,7 @@ class VGG16RoIHead(nn.Module):
         roi_indices = roi_indices.float()
 
         indices_and_rois = torch.cat([roi_indices[:, None], rois], dim=1)
-        # NOTE: important: yx->xy
+
         xy_indices_and_rois = indices_and_rois[:, [0, 2, 1, 4, 3]]
         indices_and_rois = xy_indices_and_rois.contiguous()
 

@@ -3,7 +3,7 @@ import torch
 import torchvision.ops
 from numpy import ndarray
 
-from nets.backbone import get_feature_extractor
+from nets.backbone import get_feature_extractor_classifier
 from nets.region_proposal_network import RegionProposalNetwork, enumerate_shifted_anchor
 
 
@@ -135,7 +135,7 @@ class ProposalCreator(object):
 if __name__ == "__main__":
     image = torch.Tensor(2, 3, 800, 800)
     # [22500,4] = [50*50*9,4]
-    fe = get_feature_extractor()
+    fe = get_feature_extractor_classifier()
     feature = fe(image)
 
     rpn = RegionProposalNetwork(512, 512)

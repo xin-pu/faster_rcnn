@@ -3,8 +3,7 @@ from torch import nn
 from torch.nn import functional as f
 import numpy as np
 
-from nets.backbone import generate_anchor_base, get_feature_extractor
-from nets.proposal_layer import ProposalCreator
+from nets.backbone import generate_anchor_base, get_feature_extractor_classifier
 
 
 def enumerate_shifted_anchor(anchor_base, feat_stride, height, width):
@@ -63,14 +62,14 @@ class RegionProposalNetwork(nn.Module):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.constant_(m.bias, 0)
 
-    def forward(self, out_feature):
-        # 模型前传
-        x = f.relu(self.conv(out_feature))
+    def forward(self, x):
+
+        x = f.relu(self.conv(x))
         pred_cls_scores = self.confidence_classify_layer(x)  # [B,50*50*9,2]
         pred_locations = torch.sigmoid(self.location_regression_layer(x))  # [B,50,50*9,4]
         # Todo Sigmoid or Softmax ?
 
-        batch_size, _, height, width = out_feature.shape
+        batch_size, _, height, width = x.shape
 
         pred_locations = pred_locations.permute(0, 2, 3, 1).contiguous().view(batch_size, -1, 4)  # [B,50*50*9,4]
 
@@ -85,7 +84,7 @@ class RegionProposalNetwork(nn.Module):
 if __name__ == "__main__":
     image = torch.Tensor(2, 3, 800, 800)
     # [22500,4] = [50*50*9,4]
-    fe = get_feature_extractor()
+    fe = get_feature_extractor_classifier()
     feature = fe(image)
 
     rpn = RegionProposalNetwork(512, 512)

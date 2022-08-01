@@ -4,11 +4,14 @@ import torch
 
 
 # Todo 对候选框区域的特征图为输入，预测目标框的类别概率和坐标
-class VGG16RoIHead(nn.Module):
-    """Faster R-CNN Head for VGG-16 based implementation.
-    This class is used as a head for Faster R-CNN.
-    This outputs class-wise localizations and classification based on feature maps in the given RoIs.
 
+
+class VGG16RoIHead(nn.Module):
+    """
+    目的是执行从不均匀大小到 固定大小的特征地图（feature maps） (例如 7×7)的输入的最大范围池。
+    这一层有两个输入
+    一个从有几个卷积和最大池（max-pooling）层的深度卷积网络获得的固定大小的特征地图（feature map)
+    一个 Nx5 矩阵代表一列兴趣区域（regions of interest），N 表示RoIs的个数. 第一列表示影像的索引，剩下的四个是范围的上左和下右的坐标
     Args:
         n_class (int): The number of classes possibly including the background.
         roi_size (int): Height and width of the feature maps after RoI-pooling.
@@ -22,18 +25,24 @@ class VGG16RoIHead(nn.Module):
                  n_class,
                  roi_size,
                  spatial_scale):
-        # n_class includes the background
+        """
+
+        :param classifier: 从VGG16中获取的线性层
+        :param n_class: 包含背景的分类数目
+        :param roi_size: ROI后的特征度宽高
+        :param spatial_scale: ROI调整比例
+        """
         super(VGG16RoIHead, self).__init__()
 
         self.classifier = classifier
+        self.n_class = n_class
+        self.roi_size = roi_size
+        self.spatial_scale = spatial_scale
+
         self.roi = RoIPool((self.roi_size, self.roi_size), self.spatial_scale)
 
         self.cls_loc = nn.Linear(4096, n_class * 4)
         self.score = nn.Linear(4096, n_class)
-
-        self.n_class = n_class
-        self.roi_size = roi_size
-        self.spatial_scale = spatial_scale
 
         for m in self.modules():
             if isinstance(m, (nn.Conv2d, nn.Linear)):
@@ -61,5 +70,15 @@ class VGG16RoIHead(nn.Module):
 
 
 if __name__ == "__main__":
-    pass
+    from nets.backbone import get_feature_extractor_classifier
+    from nets.region_proposal_network import RegionProposalNetwork
 
+    image = torch.Tensor(2, 3, 800, 800)
+    fe_extractor, cls = get_feature_extractor_classifier()
+    rpn = RegionProposalNetwork(512, 512)
+    head = VGG16RoIHead(classifier=cls, n_class=21, roi_size=7, spatial_scale=16)
+
+    fe = fe_extractor(image)
+    rpn_cls, rpn_loc, rpn_obj = rpn(fe)
+
+    head(fe, )

@@ -5,7 +5,7 @@ import torchvision.ops
 from nets.backbone import get_feature_extractor_classifier
 from nets.region_proposal_network import RegionProposalNetwork
 from utils.anchor import enumerate_shifted_anchor
-from utils.box import cvt_location_to_bbox
+from utils.bbox_tools import cvt_location_to_bbox
 
 
 class ProposalCreator(object):

@@ -6,10 +6,12 @@ from nets.backbone import get_feature_extractor_classifier
 from utils.anchor import generate_anchor_base
 
 
-# 候选框提取网络
-# forward预测候选框
-# 在输入的特征图上，构造了一个分类分支和一个坐标回归分支
 class RegionProposalNetwork(nn.Module):
+    """
+    候选框提取网络
+    forward预测候选框
+    在输入的特征图上，构造了一个分类分支和一个坐标回归分支
+    """
 
     def __init__(self,
                  in_channels=512,
@@ -44,13 +46,18 @@ class RegionProposalNetwork(nn.Module):
 
         batch_size, _, height, width = x.shape
 
-        pred_locations = pred_locations.permute(0, 2, 3, 1).contiguous().view(batch_size, -1, 4)  # [B,50*50*9,4]
+        pred_locations = pred_locations.permute(0, 2, 3, 1) \
+            .contiguous() \
+            .view(batch_size, -1, 4)  # [B,50*50*9,4]
 
-        pred_cls_scores = pred_cls_scores.permute(0, 2, 3, 1).contiguous()  # [B,50,50,9,2]
+        pred_cls_scores = pred_cls_scores.permute(0, 2, 3, 1) \
+            .contiguous()  # [B,50,50,9,2]
 
         objectness_score = pred_cls_scores.view(batch_size, height, width, -1, 2)[:, :, :, :, 1] \
-            .contiguous().view(batch_size, -1)
-        pred_cls_scores = pred_cls_scores.view(batch_size, -1, 2)
+            .contiguous() \
+            .view(batch_size, -1)
+        pred_cls_scores = pred_cls_scores \
+            .view(batch_size, -1, 2)
         return pred_cls_scores, pred_locations, objectness_score
 
 

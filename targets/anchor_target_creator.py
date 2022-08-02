@@ -1,6 +1,6 @@
 import numpy as np
 
-from utils.box import bbox_iou, cvt_bbox_to_location
+from utils.bbox_tools import cvt_bbox_to_location, bbox_iou
 
 
 class AnchorTargetCreator(object):
@@ -30,7 +30,7 @@ class AnchorTargetCreator(object):
 
     def __call__(self, bbox, anchor, img_size):
         """
-
+        根据图像输入的bbox,对其Anchor Box定位
         :param bbox: Bound Box坐标，【R,4】 R 是 BoundBox 数量
         :param anchor: Anchor Box 坐标 【S,4】 S 是 Anchor 数量
         :param img_size: 图像尺寸

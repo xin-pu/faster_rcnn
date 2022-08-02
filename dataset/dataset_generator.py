@@ -39,7 +39,7 @@ class ImageDataSet(Dataset):
         image_file = self.image_files[index]
         annot_file = self.annot_files[index]
         image = cv2.imread(image_file, cv2.IMREAD_COLOR)
-        image = cv2.resize(image, (600, 600))
+        image = cv2.resize(image, (800, 800))
         image = image / 255.
         image = image.transpose(2, 0, 1)
         return image, torch.zeros(3)

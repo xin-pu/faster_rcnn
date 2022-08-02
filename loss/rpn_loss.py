@@ -22,17 +22,17 @@ class RPNLoss(torch.nn.Module):
 
         x = torch.abs(mask_loc_targets - mask_loc_preds)
         rpn_loc_loss = ((x < 1).float() * 0.5 * x ** 2) + ((x >= 1).float() * (x - 0.5))
-        n_reg = (gt_rpn_score > 0).float().sum()
+        n_reg = (gt_rpn_score > 0).float().sum()  # ignore gt_label==-1 for rpn_loss
         rpn_loc_loss = rpn_loc_loss.sum() / n_reg
 
         return cls_loss + self.rpn_lambda * rpn_loc_loss
 
 
 if __name__ == "__main__":
-    pred_anchor_locs_ = torch.Tensor(12321, 4)
-    pred_cls_scores_ = torch.Tensor(12321, 2)
-    anchor_locations_ = torch.Tensor(12321, 4)
-    anchor_labels_ = torch.Tensor(12321)
+    pred_anchor_locs_ = torch.ones((12321, 4)).float()
+    pred_cls_scores_ = torch.ones((12321, 2)).float()
+    anchor_locations_ = torch.ones((12321, 4)).float()
+    anchor_labels_ = torch.ones(12321).long()
 
     loss = RPNLoss()
     rpn_los = loss(pred_cls_scores_, pred_anchor_locs_, anchor_labels_, anchor_locations_)

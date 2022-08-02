@@ -3,7 +3,7 @@ import torch
 import torchvision.ops
 
 from nets.backbone import get_feature_extractor_classifier
-from nets.region_proposal_network import RegionProposalNetwork
+
 from utils.anchor import enumerate_shifted_anchor
 from utils.bbox_tools import cvt_location_to_bbox
 
@@ -38,7 +38,7 @@ class ProposalCreator(object):
 
         self.min_size_threshold = min_size_threshold
 
-    def call(self, pred_locations, objectness_score, anchor, img_size, scale=1.):
+    def __call__(self, pred_locations, objectness_score, anchor, img_size, scale=1.):
         """
         -- 将回归值恢复到原图检测框
         -- 尺寸裁剪至图像尺寸内
@@ -91,16 +91,4 @@ class ProposalCreator(object):
 
 
 if __name__ == "__main__":
-    image = torch.Tensor(2, 3, 800, 800)
-    # [22500,4] = [50*50*9,4]
-    fe, _ = get_feature_extractor_classifier()
-    feature = fe(image)
-
-    rpn = RegionProposalNetwork(512, 512)
-    rpn_cls, rpn_loc, rpn_obj = rpn(feature)
-    print("rpn_cls:{}\r\nrpn_loc:{}\r\nrpn_obj:{}".format(rpn_cls.shape, rpn_loc.shape, rpn_obj.shape))
-
-    anchors = enumerate_shifted_anchor(rpn.anchor_base, 16, 50, 50)
-    p = ProposalCreator()
-    roi_after_filter = p.call(rpn_loc[0].data.numpy(), rpn_obj[1].data.numpy(), anchors, (800, 800))
-    print(roi_after_filter.shape)
+    pass

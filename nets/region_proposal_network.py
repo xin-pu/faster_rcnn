@@ -3,7 +3,8 @@ from torch import nn
 from torch.nn import functional as f
 
 from nets.backbone import get_feature_extractor_classifier
-from utils.anchor import generate_anchor_base
+from targets.proposal_creator import ProposalCreator
+from utils.anchor import *
 
 
 class RegionProposalNetwork(nn.Module):
@@ -22,12 +23,14 @@ class RegionProposalNetwork(nn.Module):
         super(RegionProposalNetwork, self).__init__()
 
         self.anchor_base = generate_anchor_base(anchor_scales=anchor_scales, ratios=ratios)
+
         self.feat_stride = feat_stride
         self.n_anchor = n_anchor = self.anchor_base.shape[0]
 
         self.conv = nn.Conv2d(in_channels, mid_channels, 3, 1, 1)
         self.location_regression_layer = nn.Conv2d(mid_channels, n_anchor * 4, 1, 1, 0)  # 卷积层=》坐标
         self.confidence_classify_layer = nn.Conv2d(mid_channels, n_anchor * 2, 1, 1, 0)  # 卷积层=》正负样本分类
+        self.proposal_layer = ProposalCreator()
 
         # 初始化各层参数
         for m in self.modules():
@@ -37,7 +40,7 @@ class RegionProposalNetwork(nn.Module):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.constant_(m.bias, 0)
 
-    def forward(self, x):
+    def forward(self, x, image_size, scale=1.):
 
         x = f.relu(self.conv(x))
         pred_cls_scores = torch.sigmoid(self.confidence_classify_layer(x))  # [B,50*50*9,2]
@@ -45,6 +48,7 @@ class RegionProposalNetwork(nn.Module):
         # Todo Sigmoid or Softmax ?
 
         batch_size, _, height, width = x.shape
+        anchor = enumerate_shifted_anchor(np.array(self.anchor_base), self.feat_stride, height, width)
 
         pred_locations = pred_locations.permute(0, 2, 3, 1) \
             .contiguous() \
@@ -58,7 +62,21 @@ class RegionProposalNetwork(nn.Module):
             .view(batch_size, -1)
         pred_cls_scores = pred_cls_scores \
             .view(batch_size, -1, 2)
-        return pred_cls_scores, pred_locations, objectness_score
+
+        rois = list()
+        roi_indices = list()
+        for i in range(batch_size):
+            # 根据预测的结果生成 ROIS
+            roi = self.proposal_layer(pred_locations[i].cpu().data.numpy(),
+                                      objectness_score[i].cpu().data.numpy(),
+                                      anchor, image_size, scale)
+            batch_index = i * np.ones((len(roi),), dtype=np.int32)
+            rois.append(roi)
+            roi_indices.append(batch_index)
+
+        rois = np.concatenate(rois, axis=0)
+        roi_indices = np.concatenate(roi_indices, axis=0)
+        return pred_cls_scores, pred_locations, rois, roi_indices
 
 
 if __name__ == "__main__":
@@ -68,5 +86,6 @@ if __name__ == "__main__":
     feature = fe(image)
 
     rpn = RegionProposalNetwork(512, 512)
-    rpn_cls, rpn_loc, rpn_obj = rpn(feature)
-    print("rpn_cls:{}\r\nrpn_loc:{}\r\nrpn_obj:{}".format(rpn_cls.shape, rpn_loc.shape, rpn_obj.shape))
+    pred_scores, pred_locs, pred_rois, pred_roi_indices = rpn(feature, image.shape[2:])
+    print("rpn_cls:{}\r\nrpn_loc:{}".format(pred_scores.shape, pred_locs.shape, pred_rois.shape))
+    print("rois:{}\r\nroi_indices:{}".format(pred_rois.shape, pred_roi_indices.shape))

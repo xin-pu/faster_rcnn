@@ -77,6 +77,4 @@ if __name__ == "__main__":
     head = VGG16RoIHead(classifier=cls, n_class=21, roi_size=7, spatial_scale=16)
 
     fe = fe_extractor(image)
-    rpn_cls, rpn_loc, rpn_obj = rpn(fe)
-
-    head(fe, )
+    pred_scores, pred_locs, pred_rois, pred_roi_indices = rpn(fe, image.shape[2:])

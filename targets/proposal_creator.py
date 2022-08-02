@@ -2,10 +2,7 @@ import numpy as np
 import torch
 import torchvision.ops
 
-from nets.backbone import get_feature_extractor_classifier
-
-from utils.anchor import enumerate_shifted_anchor
-from utils.bbox_tools import cvt_location_to_bbox
+from utils.bbox_tools_torch import cvt_location_to_bbox
 
 
 class ProposalCreator(object):
@@ -64,14 +61,14 @@ class ProposalCreator(object):
         roi = cvt_location_to_bbox(pred_locations, anchor)
 
         # 尺寸裁剪至图像尺寸内
-        roi[:, slice(0, 4, 2)] = np.clip(roi[:, slice(0, 4, 2)], 0, img_size[0])
-        roi[:, slice(1, 4, 2)] = np.clip(roi[:, slice(1, 4, 2)], 0, img_size[1])
+        roi[:, slice(0, 4, 2)] = torch.clip(roi[:, slice(0, 4, 2)], 0, img_size[0])
+        roi[:, slice(1, 4, 2)] = torch.clip(roi[:, slice(1, 4, 2)], 0, img_size[1])
 
         # 先按 min_size_threshold 抑制不符合的候选框
         min_size = self.min_size_threshold * scale
         hs = roi[:, 2] - roi[:, 0]
         ws = roi[:, 3] - roi[:, 1]
-        keep = np.where((hs >= min_size) & (ws >= min_size))[0]
+        keep = torch.where((hs >= min_size) & (ws >= min_size))[0]
         roi = roi[keep, :]
         score = objectness_score[keep]
 
@@ -86,7 +83,7 @@ class ProposalCreator(object):
                                    torch.from_numpy(score).cuda(),
                                    self.nms_iou_thresh)
         keep = keep[:n_post_nms]
-        roi = roi[keep.cpu().numpy()]
+        roi = roi[keep.cpu()]
         return roi
 
 

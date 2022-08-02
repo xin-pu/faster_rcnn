@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 from numpy import ndarray
 
 
@@ -70,32 +69,6 @@ def cvt_bbox_to_location(anchor, dst_bbox):
 
 
 def bbox_iou(bbox_a: ndarray, bbox_b: ndarray) -> ndarray:
-    """Calculate the Intersection of Unions (IoUs) between bounding boxes.
-
-    IoU is calculated as a ratio of area of the intersection
-    and area of the union.
-
-    This function accepts both :obj:`numpy.ndarray` and :obj:`cupy.ndarray` as
-    inputs. Please note that both :obj:`bbox_a` and :obj:`bbox_b` need to be
-    same type.
-    The output is same type as the type of the inputs.
-
-    Args:
-        bbox_a (array): An array whose shape is :math:`(N, 4)`.
-            :math:`N` is the number of bounding boxes.
-            The dtype should be :obj:`numpy.float32`.
-        bbox_b (array): An array similar to :obj:`bbox_a`,
-            whose shape is :math:`(K, 4)`.
-            The dtype should be :obj:`numpy.float32`.
-
-    Returns:
-        array:
-        An array whose shape is :math:`(N, K)`. \
-        An element at index :math:`(n, k)` contains IoUs between \
-        :math:`n` th bounding box in :obj:`bbox_a` and :math:`k` th bounding \
-        box in :obj:`bbox_b`.
-
-    """
     if bbox_a.shape[1] != 4 or bbox_b.shape[1] != 4:
         raise IndexError
 
@@ -111,9 +84,12 @@ def bbox_iou(bbox_a: ndarray, bbox_b: ndarray) -> ndarray:
 
 
 if __name__ == "__main__":
-    test_anchor = np.asarray((0., 0., 1., 1.)).reshape((1, 4))
-    test_location = np.asarray((0.1, 0.1, 0.5, 0.5)).reshape((1, 4))
+    test_anchor = np.asarray((0., 0., 1., 1., 0., 0., 1., 1.)).reshape((2, 4))
+    test_location = np.asarray((0.1, 0.1, 0.5, 0.5, 0.1, 0.1, 0.5, 0.5)).reshape((2, 4))
     bbox = cvt_location_to_bbox(test_location, test_anchor)
     loc = cvt_bbox_to_location(test_anchor, bbox)
     print(bbox)
     print(loc)
+
+    iou = bbox_iou(test_anchor, bbox)
+    print(iou)

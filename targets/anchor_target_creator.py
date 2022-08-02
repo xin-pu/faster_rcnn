@@ -1,6 +1,6 @@
 import numpy as np
 
-from utils.bbox_tools import cvt_bbox_to_location, bbox_iou
+from utils.bbox_tools_torch import cvt_bbox_to_location, bbox_iou
 
 
 class AnchorTargetCreator(object):

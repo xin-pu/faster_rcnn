@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import ndarray
 
-from utils.bbox_tools import bbox_iou, cvt_bbox_to_location
+from utils.bbox_tools_torch import bbox_iou, cvt_bbox_to_location
 
 
 class ProposalTargetCreator(object):

@@ -5,7 +5,6 @@ from torch import nn
 from nets.backbone import get_feature_extractor_classifier
 from nets.region_proposal_network import RegionProposalNetwork
 from nets.roi_pooling import VGG16RoIHead
-from utils.anchor import enumerate_shifted_anchor
 
 
 def no_grad(fun):
@@ -57,6 +56,7 @@ class FasterRCNN(nn.Module):
         pred_scores, pred_locs, pred_rois, pred_roi_indices = self.rpn(feature, img_size, scale)
 
         roi_cls_locs, roi_scores = self.head(feature, pred_rois, pred_roi_indices)
+
         return roi_cls_locs, roi_scores, pred_rois, pred_roi_indices
 
 

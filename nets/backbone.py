@@ -7,7 +7,9 @@ from utils.anchor import generate_anchor_base
 
 def get_feature_extractor_classifier():
     """
-    返回VGG16的特征提取层 和 分类层
+    返回VGG16的特征提取层 和 分类层 用于
+    特征提取层用于构建猪肝网络
+    分类层用于对池化后感兴趣区域分类
     :return:
     """
     # the 30th layer of features is relu of conv5_3
@@ -36,7 +38,10 @@ if __name__ == "__main__":
     # When Image size is [800,800] => M=50,N=50
     # So RPN Input Unit is 512
     fe_extractor, cls = get_feature_extractor_classifier()
-    images = torch.Tensor(1, 3, 800, 800)
+    print(fe_extractor)
+    print(cls)
+
+    images = torch.Tensor(1, 3, 800, 800).float()
     features = fe_extractor(images)
     print(features.shape)
 

@@ -86,8 +86,8 @@ def bbox_iou(bbox_a: Tensor, bbox_b: Tensor) -> Tensor:
 
 
 if __name__ == "__main__":
-    test_anchor = torch.asarray((0., 0., 1., 1.,0., 0., 1., 1.,)).reshape((2, 4))
-    test_location = torch.asarray((0.1, 0.1, 0.5, 0.5,.1, 0.1, 0.5, 0.5,)).reshape((2, 4))
+    test_anchor = torch.asarray((0., 0., 1., 1., 0., 0., 1., 1.,)).reshape((2, 4))
+    test_location = torch.asarray((0.1, 0.1, 0.5, 0.5, .1, 0.1, 0.5, 0.5,)).reshape((2, 4))
 
     bbox = cvt_location_to_bbox(test_location, test_anchor)
     loc = cvt_bbox_to_location(test_anchor, bbox)

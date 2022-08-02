@@ -1,4 +1,4 @@
-import numpy as np
+import torch
 
 
 def generate_anchor_base(base_size=16,
@@ -7,11 +7,11 @@ def generate_anchor_base(base_size=16,
     py = base_size / 2.
     px = base_size / 2.
 
-    anchor_base = np.zeros((len(ratios) * len(anchor_scales), 4))
+    anchor_base = torch.zeros((len(ratios) * len(anchor_scales), 4))
     for i in range(len(ratios)):
         for j in range(len(anchor_scales)):
-            h = base_size * anchor_scales[j] * np.sqrt(ratios[i])
-            w = base_size * anchor_scales[j] * np.sqrt(1. / ratios[i])
+            h = base_size * anchor_scales[j] * torch.sqrt(torch.tensor(ratios[i]))
+            w = base_size * anchor_scales[j] * torch.sqrt(torch.tensor(1. / ratios[i]))
 
             index = i * len(anchor_scales) + j
             anchor_base[index, 0] = py - h / 2.
@@ -36,13 +36,21 @@ def enumerate_shifted_anchor(anchor_base, feat_stride, height, width):
     :return:所有Anchor [Height*Width*A,4]
     """
 
-    shift_y = np.arange(0, height * feat_stride, feat_stride)  # (0,800,16)
-    shift_x = np.arange(0, width * feat_stride, feat_stride)  # (0,800,16)
-    shift_x, shift_y = np.meshgrid(shift_x, shift_y)
-    shift = np.stack((shift_y.ravel(), shift_x.ravel(), shift_y.ravel(), shift_x.ravel()), axis=1)
+    shift_y = torch.arange(0, height * feat_stride, feat_stride)  # (0,800,16)
+    shift_x = torch.arange(0, width * feat_stride, feat_stride)  # (0,800,16)
+    shift_x, shift_y = torch.meshgrid(shift_x, shift_y, indexing='ij')
+    shift = torch.stack((shift_y.ravel(), shift_x.ravel(), shift_y.ravel(), shift_x.ravel()), dim=1)
 
     a = anchor_base.shape[0]
     k = shift.shape[0]
-    anchor = anchor_base.reshape((1, a, 4)) + shift.reshape((1, k, 4)).transpose((1, 0, 2))
+    anchor = anchor_base.reshape((1, a, 4)) + shift.reshape((1, k, 4)).transpose(0, 1)
     anchor = anchor.reshape((k * a, 4))
     return anchor
+
+
+if __name__ == "__main__":
+    ab = generate_anchor_base()
+    print(ab)
+
+    an = enumerate_shifted_anchor(ab, 16, 50, 50)
+    print(an)

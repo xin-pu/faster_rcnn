@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import ndarray
 
-from utils.bbox_tools_torch import bbox_iou, cvt_bbox_to_location
+from utils.bbox_tools_numpy import bbox_iou, cvt_bbox_to_location
 
 
 class ProposalTargetCreator(object):
@@ -23,7 +23,7 @@ class ProposalTargetCreator(object):
                  label: ndarray,
                  loc_normalize_mean=(0., 0., 0., 0.),
                  loc_normalize_std=(0.1, 0.1, 0.2, 0.2)):
-        
+
         n_bbox, _ = bbox.shape
 
         roi = np.concatenate((roi, bbox), axis=0)

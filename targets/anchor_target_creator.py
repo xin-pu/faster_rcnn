@@ -84,9 +84,9 @@ class AnchorTargetCreator(object):
     def calc_ious(anchor, bbox, inside_index):
         # ious between the anchors and the gt boxes
         ious = bbox_iou(anchor, bbox)
-        argmax_ious = ious.argmax(axis=1)
+        argmax_ious = ious.argmax(dim=1)
         max_ious = ious[np.arange(len(inside_index)), argmax_ious]
-        gt_argmax_ious = ious.argmax(axis=0)
+        gt_argmax_ious = ious.argmax(dim=0)
         gt_max_ious = ious[gt_argmax_ious, np.arange(ious.shape[1])]
         gt_argmax_ious = np.where(ious == gt_max_ious)[0]
 

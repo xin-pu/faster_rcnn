@@ -8,7 +8,7 @@ class VGG16RoIHead(nn.Module):
     """
     目的是执行从不均匀大小到 固定大小的特征地图（feature maps） (例如 7×7)的输入的最大范围池。
     这一层有两个输入
-    一个从有几个卷积和最大池（max-pooling）层的深度卷积网络获得的固定大小的特征地图（feature map)
+    一个从有几个卷积和最大池（max-pooling）层的深度卷积网络获得的固定大小的特征地图 feature map
     一个 Nx5 矩阵代表一列兴趣区域（regions of interest），N 表示RoIs的个数. 第一列表示影像的索引，剩下的四个是范围的上左和下右的坐标
     Args:
         n_class (int): The number of classes possibly including the background.
@@ -78,3 +78,7 @@ if __name__ == "__main__":
 
     fe = fe_extractor(image)
     pred_scores, pred_locs, pred_rois, pred_roi_indices = rpn(fe, image.shape[2:])
+    print(pred_scores.shape)
+    print(pred_locs.shape)
+    print(pred_rois.shape)
+    print(pred_roi_indices.shape)

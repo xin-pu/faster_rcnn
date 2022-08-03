@@ -1,4 +1,3 @@
-import torch
 from torch import nn
 from torch.nn import functional as f
 
@@ -48,7 +47,7 @@ class RegionProposalNetwork(nn.Module):
         # Todo Sigmoid or Softmax ?
 
         batch_size, _, height, width = x.shape
-        anchor = enumerate_shifted_anchor(np.array(self.anchor_base), self.feat_stride, height, width)
+        anchor = enumerate_shifted_anchor(self.anchor_base, self.feat_stride, height, width)
 
         pred_locations = pred_locations.permute(0, 2, 3, 1) \
             .contiguous() \
@@ -67,20 +66,20 @@ class RegionProposalNetwork(nn.Module):
         roi_indices = list()
         for i in range(batch_size):
             # 根据预测的结果生成 ROIS
-            roi = self.proposal_layer(pred_locations[i].cpu().data.numpy(),
-                                      objectness_score[i].cpu().data.numpy(),
+            roi = self.proposal_layer(pred_locations[i],
+                                      objectness_score[i],
                                       anchor, image_size, scale)
-            batch_index = i * np.ones((len(roi),), dtype=np.int32)
+            batch_index = i * torch.ones((len(roi),)).long()
             rois.append(roi)
             roi_indices.append(batch_index)
 
-        rois = np.concatenate(rois, axis=0)
-        roi_indices = np.concatenate(roi_indices, axis=0)
+        rois = torch.concat(rois, dim=0)
+        roi_indices = torch.concat(roi_indices, dim=0)
         return pred_cls_scores, pred_locations, rois, roi_indices
 
 
 if __name__ == "__main__":
-    image = torch.Tensor(2, 3, 800, 800)
+    image = torch.Tensor(1, 3, 800, 800)
     # [22500,4] = [50*50*9,4]
     fe, _ = get_feature_extractor_classifier()
     feature = fe(image)

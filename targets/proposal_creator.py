@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import torchvision.ops
 
@@ -73,14 +72,14 @@ class ProposalCreator(object):
         score = objectness_score[keep]
 
         # 按分数排序，取前n_pre_nms个
-        order = score.ravel().argsort()[::-1]
+        order = score.ravel().argsort()
         order = order[:n_pre_nms]
         roi = roi[order, :]
         score = score[order]
 
         # 非极大值抑制 根据Score >0.7 取前n_post_nms个进行非极大值抑制
-        keep = torchvision.ops.nms(torch.from_numpy(roi).cuda(),
-                                   torch.from_numpy(score).cuda(),
+        keep = torchvision.ops.nms(roi,
+                                   score,
                                    self.nms_iou_thresh)
         keep = keep[:n_post_nms]
         roi = roi[keep.cpu()]

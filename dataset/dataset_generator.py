@@ -42,9 +42,9 @@ class ImageDataSet(Dataset):
         image = cv2.resize(image, (800, 800))
         image = image / 255.
         image = image.transpose(2, 0, 1)
+        image = torch.asarray(image).float()  # opencv 读取维Double 需转float
 
         annot_file = self.annot_files[index]
-        print(annot_file)
         data = pd.read_csv(annot_file, sep=' ', header=None).iloc[:, :].values
         label_bboxes = torch.asarray(data).view(-1, 5)
 

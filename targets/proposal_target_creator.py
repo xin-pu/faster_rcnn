@@ -50,8 +50,7 @@ class ProposalTargetCreator(object):
         neg_index = torch.where((max_iou < self.neg_iou_thresh_hi) &
                                 (max_iou >= self.neg_iou_thresh_lo))[0]
         neg_roi_per_this_image = self.n_sample - pos_roi_per_this_image
-        neg_roi_per_this_image = int(min(neg_roi_per_this_image,
-                                         neg_index.shape))
+        neg_roi_per_this_image = int(min(neg_roi_per_this_image,neg_index.shape))
         if neg_index.shape > 0:
             indices = torch.randperm(len(neg_index))[:neg_roi_per_this_image]
             neg_index = neg_index[indices]

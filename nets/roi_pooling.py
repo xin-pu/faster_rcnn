@@ -51,8 +51,8 @@ class VGG16RoIHead(nn.Module):
 
     def forward(self, x, rois, roi_indices):
 
-        rois = torch.from_numpy(rois).float()
-        roi_indices = torch.from_numpy(roi_indices).float()
+        rois = rois.float()
+        roi_indices = roi_indices.float()
 
         indices_and_rois = torch.cat([roi_indices[:, None], rois], dim=1)
 

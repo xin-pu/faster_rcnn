@@ -21,14 +21,11 @@ class RegionProposalNetwork(nn.Module):
                  feat_stride=16):
         super(RegionProposalNetwork, self).__init__()
 
-        self.anchor_base = generate_anchor_base(anchor_scales=anchor_scales, ratios=ratios)
-
         self.feat_stride = feat_stride
-        self.n_anchor = n_anchor = self.anchor_base.shape[0]
 
         self.conv = nn.Conv2d(in_channels, mid_channels, 3, 1, 1)
-        self.location_regression_layer = nn.Conv2d(mid_channels, n_anchor * 4, 1, 1, 0)  # 卷积层=》坐标
-        self.confidence_classify_layer = nn.Conv2d(mid_channels, n_anchor * 2, 1, 1, 0)  # 卷积层=》正负样本分类
+        self.location_regression_layer = nn.Conv2d(mid_channels, 9 * 4, 1, 1, 0)  # 卷积层=》坐标
+        self.confidence_classify_layer = nn.Conv2d(mid_channels, 9 * 2, 1, 1, 0)  # 卷积层=》正负样本分类
         self.proposal_layer = ProposalCreator()
 
         # 初始化各层参数
@@ -39,7 +36,7 @@ class RegionProposalNetwork(nn.Module):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.constant_(m.bias, 0)
 
-    def forward(self, x, image_size, scale=1.):
+    def forward(self, x, image_size, anchor, scale=1.):
 
         x = f.relu(self.conv(x))
         pred_cls_scores = torch.sigmoid(self.confidence_classify_layer(x))  # [B,50*50*9,2]
@@ -47,7 +44,6 @@ class RegionProposalNetwork(nn.Module):
         # Todo Sigmoid or Softmax ?
 
         batch_size, _, height, width = x.shape
-        anchor = enumerate_shifted_anchor(self.anchor_base, self.feat_stride, height, width)
 
         pred_locations = pred_locations.permute(0, 2, 3, 1) \
             .contiguous() \

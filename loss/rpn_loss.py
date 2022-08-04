@@ -13,7 +13,7 @@ class RPNLoss(torch.nn.Module):
                 rpn_loc: Tensor,
                 gt_rpn_score: Tensor,
                 gt_rpn_loc: Tensor):
-        cls_loss = f.cross_entropy(rpn_score, gt_rpn_score.long(), ignore_index=-1)
+        cls_loss = f.cross_entropy(rpn_score, gt_rpn_score, ignore_index=-1)
 
         pos = gt_rpn_score > 0
         mask = pos.unsqueeze(1).expand_as(rpn_loc)
@@ -29,10 +29,10 @@ class RPNLoss(torch.nn.Module):
 
 
 if __name__ == "__main__":
-    pred_anchor_locs_ = torch.ones((12321, 4)).float()
-    pred_cls_scores_ = torch.ones((12321, 2)).float()
-    anchor_locations_ = torch.ones((12321, 4)).float()
-    anchor_labels_ = torch.ones(12321).long()
+    pred_anchor_locs_ = torch.ones((1, 12321, 4)).float()
+    pred_cls_scores_ = torch.ones((1, 12321, 2)).float()
+    anchor_locations_ = torch.ones((1, 12321, 4)).float()
+    anchor_labels_ = torch.ones(1, 12321).long()
 
     loss = RPNLoss()
     rpn_los = loss(pred_cls_scores_, pred_anchor_locs_, anchor_labels_, anchor_locations_)

@@ -51,23 +51,24 @@ class FasterRCNN(nn.Module):
 
         self.proposal_target_creator = ProposalTargetCreator()
 
-    def forward(self, x, labels, bbox, scale=1.):
+    def forward(self, x, labels, bbox, anchor, scale=1.):
         img_size = x.shape[2:]
 
         feature = self.feature_extractor(x)
 
-        pred_scores, pred_locs, pred_rois, pred_roi_indices = self.rpn(feature, img_size, scale)
+        pred_scores, pred_locs, pred_rois, pred_roi_indices = self.rpn(feature, img_size, anchor, scale)
 
-        sample_roi, gt_roi_loc, gt_roi_label = self.proposal_target_creator(
-            pred_rois,
-            bbox,
-            labels,
-            self.loc_normalize_mean,
-            self.loc_normalize_std)
+        # sample_roi, gt_roi_loc, gt_roi_label = self.proposal_target_creator(
+        #     pred_rois,
+        #     bbox,
+        #     labels,
+        #     self.loc_normalize_mean,
+        #     self.loc_normalize_std)
+        #
+        # roi_cls_locs, roi_scores = self.head(feature, sample_roi, pred_roi_indices)
 
-        roi_cls_locs, roi_scores = self.head(feature, sample_roi, pred_roi_indices)
-
-        return roi_cls_locs, roi_scores, pred_rois, pred_roi_indices
+        # return roi_cls_locs, roi_scores, pred_rois, pred_roi_indices
+        return pred_scores, pred_locs
 
 
 if __name__ == "__main__":

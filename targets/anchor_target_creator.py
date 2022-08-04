@@ -3,13 +3,9 @@ import torch
 from utils.bbox_tools_torch import cvt_bbox_to_location, bbox_iou
 
 
-class AnchorTargetCreator(object):
+class AnchorTargetCreator(torch.nn.Module):
 
-    def __init__(self,
-                 n_sample=256,
-                 pos_iou_thresh=0.7,
-                 neg_iou_thresh=0.3,
-                 pos_ratio=0.5):
+    def __init__(self, n_sample=256, pos_iou_thresh=0.7, neg_iou_thresh=0.3, pos_ratio=0.5):
         """
         查看一幅图像中的目标，并将它们分配给包含它们的特定的 AnchorBox
         这将用于 RPN loss 的计算
@@ -23,12 +19,13 @@ class AnchorTargetCreator(object):
         :param neg_iou_thresh: 负样本IOU阈值，为上限
         :param pos_ratio: 正样本比例
         """
+        super(AnchorTargetCreator, self).__init__()
         self.n_sample = n_sample
         self.pos_iou_thresh = pos_iou_thresh
         self.neg_iou_thresh = neg_iou_thresh
         self.pos_ratio = pos_ratio
 
-    def __call__(self, bbox, anchor, img_size):
+    def forward(self, bbox, anchor, img_size):
         """
         根据图像输入的bbox,对其Anchor Box定位
         :param bbox: Bound Box坐标，【R,4】 R 是 BoundBox 数量
@@ -47,8 +44,8 @@ class AnchorTargetCreator(object):
         loc = cvt_bbox_to_location(anchor, bbox[argmax_ious])
 
         # map up to original set of anchors
-        label = self.unmap(label, n_anchor, inside_index, fill=-1)
-        loc = self.unmap(loc, n_anchor, inside_index, fill=0)
+        label = self.unmap(label.cuda(), n_anchor, inside_index, fill=-1)
+        loc = self.unmap(loc.cuda(), n_anchor, inside_index, fill=0)
 
         return loc, label
 
@@ -116,10 +113,10 @@ class AnchorTargetCreator(object):
         # size count)
 
         if len(data.shape) == 1:
-            ret = torch.full((count,), fill, dtype=data.dtype)
+            ret = torch.full((count,), fill, dtype=data.dtype).cuda()
             ret[index] = data
         else:
-            ret = torch.full((count,) + data.shape[1:], fill, dtype=data.dtype)
+            ret = torch.full((count,) + data.shape[1:], fill, dtype=data.dtype).cuda()
             ret[index, :] = data
         return ret
 

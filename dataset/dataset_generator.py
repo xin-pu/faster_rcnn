@@ -1,10 +1,9 @@
 import os
 import cv2
 import pandas as pd
-import torch
-from torch import Tensor
 from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import *
+from utils.to_tensor import *
 
 from cfg.plan_config import TrainPlan
 
@@ -21,7 +20,6 @@ class ImageDataSet(Dataset):
         self.image_files = pd.read_csv(train_plan.image_index_file, header=None).iloc[:, 0].values
         self.annot_files = self.get_annot_file(self.image_files)
         self.len = self.image_files.__len__()
-
         self.transform = ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2)
 
     def get_annot_file(self, image_files):
@@ -53,7 +51,7 @@ class ImageDataSet(Dataset):
         label_bboxes = torch.concat([labels, bboxes], dim=-1)
         bboxes_empty = torch.full((64 - label_bboxes.shape[0], 5), -1)
         label_bboxes = torch.concat([label_bboxes, bboxes_empty])
-        return image, label_bboxes
+        return to_device(image), to_device(label_bboxes)
 
     @staticmethod
     def cvt_bbox(box: Tensor, scale: tuple):
@@ -81,13 +79,12 @@ class ImageDataSet(Dataset):
 
 
 if __name__ == "__main__":
-    c = torch.tensor([1, 2, 3, 4, 5.])
 
     trainPlan = TrainPlan("../cfg/voc_train.yml")
     print(trainPlan)
     dataset = ImageDataSet(trainPlan)
     dataloader = DataLoader(dataset, batch_size=64, shuffle=False)
     for images, targets in dataloader:
-        print(images.shape)
-        print(targets.shape)
+        print(images)
+        print(targets)
         break

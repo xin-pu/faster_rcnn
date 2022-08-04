@@ -33,13 +33,12 @@ for epoch in range(100):  # loop over the dataset multiple times
         inputs, labels_box = data
         batch_size = inputs.shape[0]
 
-        inputs = inputs.cuda()
         labels = labels_box[..., 0:1]
         bboxes = labels_box[..., 1:]
 
         bbox_count = len(torch.where(labels[..., -1] >= 0)[0])
-        labels = labels.permute(0, 2, 1)[..., 0:bbox_count].permute(0, 2, 1).cuda()
-        bboxes = bboxes.permute(0, 2, 1)[..., 0:bbox_count].permute(0, 2, 1).cuda()
+        labels = labels.permute(0, 2, 1)[..., 0:bbox_count].permute(0, 2, 1)
+        bboxes = bboxes.permute(0, 2, 1)[..., 0:bbox_count].permute(0, 2, 1)
 
         optimizer.zero_grad()
 

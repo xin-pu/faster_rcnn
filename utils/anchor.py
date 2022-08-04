@@ -1,5 +1,7 @@
 import torch
 
+from utils.to_tensor import to_device
+
 
 def generate_anchor_base(base_size=16,
                          ratios=(0.5, 1, 2),
@@ -7,7 +9,7 @@ def generate_anchor_base(base_size=16,
     py = base_size / 2.
     px = base_size / 2.
 
-    anchor_base = torch.zeros((len(ratios) * len(anchor_scales), 4))
+    anchor_base = to_device(torch.zeros((len(ratios) * len(anchor_scales), 4)))
     for i in range(len(ratios)):
         for j in range(len(anchor_scales)):
             h = base_size * anchor_scales[j] * torch.sqrt(torch.tensor(ratios[i]))
@@ -36,8 +38,8 @@ def enumerate_shifted_anchor(anchor_base, feat_stride, height, width):
     :return:所有Anchor [Height*Width*A,4]
     """
 
-    shift_y = torch.arange(0, height * feat_stride, feat_stride)  # (0,800,16)
-    shift_x = torch.arange(0, width * feat_stride, feat_stride)  # (0,800,16)
+    shift_y = to_device(torch.arange(0, height * feat_stride, feat_stride))  # (0,800,16)
+    shift_x = to_device(torch.arange(0, width * feat_stride, feat_stride))  # (0,800,16)
     shift_x, shift_y = torch.meshgrid(shift_x, shift_y, indexing='ij')
     shift = torch.stack((shift_y.ravel(), shift_x.ravel(), shift_y.ravel(), shift_x.ravel()), dim=1)
 

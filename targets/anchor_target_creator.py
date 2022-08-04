@@ -1,4 +1,4 @@
-import numpy as np
+import torch
 
 from utils.bbox_tools_torch import cvt_bbox_to_location, bbox_iou
 
@@ -56,7 +56,7 @@ class AnchorTargetCreator(object):
         argmax_ious, max_ious, gt_argmax_ious = self.calc_ious(anchor, bbox, inside_index)
 
         # 初始默认为忽略 -1
-        label = np.zeros((len(inside_index),), dtype=np.int32) - 1
+        label = torch.zeros((len(inside_index),)).long() - 1
         # 分配负标签（0）给max_iou小于负阈值[c]的所有anchor boxes：
         label[max_ious < self.neg_iou_thresh] = 0
         # 分配正标签（1）给与ground-truth box[a]的IoU重叠最大的anchor boxes：
@@ -66,16 +66,18 @@ class AnchorTargetCreator(object):
 
         # 如果正样本过多，随机采样正样本，
         n_pos = int(self.pos_ratio * self.n_sample)
-        pos_index = np.where(label == 1)[0]
+        pos_index = torch.where(label == 1)[0]
         if len(pos_index) > n_pos:
-            disable_index = np.random.choice(pos_index, size=(len(pos_index) - n_pos), replace=False)
+            indices = torch.randperm(len(pos_index))[:(len(pos_index) - n_pos)]
+            disable_index = pos_index[indices]
             label[disable_index] = -1
 
         # 如果负样本过多，随机采样负样本，
-        n_neg = self.n_sample - np.sum(label == 1)
-        neg_index = np.where(label == 0)[0]
+        n_neg = self.n_sample - torch.sum(label == 1)
+        neg_index = torch.where(label == 0)[0]
         if len(neg_index) > n_neg:
-            disable_index = np.random.choice(neg_index, size=(len(neg_index) - n_neg), replace=False)
+            indices = torch.randperm(len(neg_index))[:(len(neg_index) - n_neg)]
+            disable_index = neg_index[indices]
             label[disable_index] = -1
 
         return argmax_ious, label
@@ -85,10 +87,10 @@ class AnchorTargetCreator(object):
         # ious between the anchors and the gt boxes
         ious = bbox_iou(anchor, bbox)
         argmax_ious = ious.argmax(dim=1)
-        max_ious = ious[np.arange(len(inside_index)), argmax_ious]
+        max_ious = ious[torch.arange(len(inside_index)), argmax_ious]
         gt_argmax_ious = ious.argmax(dim=0)
-        gt_max_ious = ious[gt_argmax_ious, np.arange(ious.shape[1])]
-        gt_argmax_ious = np.where(ious == gt_max_ious)[0]
+        gt_max_ious = ious[gt_argmax_ious, torch.arange(ious.shape[1])]
+        gt_argmax_ious = torch.where(ious == gt_max_ious)[0]
 
         return argmax_ious, max_ious, gt_argmax_ious
 
@@ -101,7 +103,7 @@ class AnchorTargetCreator(object):
         :param w:
         :return:
         """
-        index_inside = np.where(
+        index_inside = torch.where(
             (anchor[:, 0] >= 0) &
             (anchor[:, 1] >= 0) &
             (anchor[:, 2] <= h) &
@@ -114,12 +116,10 @@ class AnchorTargetCreator(object):
         # size count)
 
         if len(data.shape) == 1:
-            ret = np.empty((count,), dtype=data.dtype)
-            ret.fill(fill)
+            ret = torch.full((count,), fill, dtype=data.dtype)
             ret[index] = data
         else:
-            ret = np.empty((count,) + data.shape[1:], dtype=data.dtype)
-            ret.fill(fill)
+            ret = torch.full((count,) + data.shape[1:], fill, dtype=data.dtype)
             ret[index, :] = data
         return ret
 
@@ -127,7 +127,7 @@ class AnchorTargetCreator(object):
 if __name__ == "__main__":
     from utils.anchor import generate_anchor_base, enumerate_shifted_anchor
 
-    test_bbox = np.asarray([[20, 30, 400, 500], [300, 400, 500, 600]], dtype=np.float32)  # [y1, x1, y2, x2] format
+    test_bbox = torch.asarray([[20, 30, 400, 500], [300, 400, 500, 600]]).float()  # [y1, x1, y2, x2] format
 
     ang_base = generate_anchor_base()
     ang_pattern = enumerate_shifted_anchor(ang_base, 16, 50, 50)

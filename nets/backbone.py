@@ -3,6 +3,7 @@ from torch import nn
 from torchvision.models import vgg16, VGG16_Weights
 
 from utils.anchor import generate_anchor_base
+from utils.to_tensor import to_device
 
 
 def get_feature_extractor_classifier():
@@ -40,11 +41,12 @@ if __name__ == "__main__":
     fe_extractor, cls = get_feature_extractor_classifier()
     print(fe_extractor)
     print(cls)
-
-    images = torch.Tensor(1, 3, 800, 800).float()
+    fe_extractor = fe_extractor.cuda()
+    cls = cls.cuda()
+    images = to_device(torch.Tensor(1, 3, 800, 800)).float()
     features = fe_extractor(images)
-    print(features.shape)
+    print(features)
 
     # anchors: [9,4]
     anchors = generate_anchor_base(base_size=16)
-    print(anchors.shape)
+    print(anchors)

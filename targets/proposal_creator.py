@@ -78,11 +78,11 @@ class ProposalCreator(object):
         score = score[order]
 
         # 非极大值抑制 根据Score >0.7 取前n_post_nms个进行非极大值抑制
-        keep = torchvision.ops.nms(roi.cuda(),
+        keep = torchvision.ops.nms(roi,
                                    score,
                                    self.nms_iou_thresh)
         keep = keep[:n_post_nms]
-        roi = roi[keep.cpu()]
+        roi = roi[keep]
         return roi
 
 

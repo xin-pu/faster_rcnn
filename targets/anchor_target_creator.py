@@ -1,11 +1,16 @@
 import torch
 
 from utils.bbox_tools_torch import cvt_bbox_to_location, bbox_iou
+from utils.to_tensor import to_device
 
 
 class AnchorTargetCreator(torch.nn.Module):
 
-    def __init__(self, n_sample=256, pos_iou_thresh=0.7, neg_iou_thresh=0.3, pos_ratio=0.5):
+    def __init__(self,
+                 n_sample=256,
+                 pos_iou_thresh=0.7,
+                 neg_iou_thresh=0.3,
+                 pos_ratio=0.5):
         """
         查看一幅图像中的目标，并将它们分配给包含它们的特定的 AnchorBox
         这将用于 RPN loss 的计算
@@ -44,8 +49,8 @@ class AnchorTargetCreator(torch.nn.Module):
         loc = cvt_bbox_to_location(anchor, bbox[argmax_ious])
 
         # map up to original set of anchors
-        label = self.unmap(label.cuda(), n_anchor, inside_index, fill=-1)
-        loc = self.unmap(loc.cuda(), n_anchor, inside_index, fill=0)
+        label = self.unmap(label, n_anchor, inside_index, fill=-1)
+        loc = self.unmap(loc, n_anchor, inside_index, fill=0)
 
         return loc, label
 
@@ -53,7 +58,7 @@ class AnchorTargetCreator(torch.nn.Module):
         argmax_ious, max_ious, gt_argmax_ious = self.calc_ious(anchor, bbox, inside_index)
 
         # 初始默认为忽略 -1
-        label = torch.zeros((len(inside_index),)).long() - 1
+        label = to_device(torch.zeros((len(inside_index),))).long() - 1
         # 分配负标签（0）给max_iou小于负阈值[c]的所有anchor boxes：
         label[max_ious < self.neg_iou_thresh] = 0
         # 分配正标签（1）给与ground-truth box[a]的IoU重叠最大的anchor boxes：
@@ -113,10 +118,10 @@ class AnchorTargetCreator(torch.nn.Module):
         # size count)
 
         if len(data.shape) == 1:
-            ret = torch.full((count,), fill, dtype=data.dtype).cuda()
+            ret = to_device(torch.full((count,), fill, dtype=data.dtype))
             ret[index] = data
         else:
-            ret = torch.full((count,) + data.shape[1:], fill, dtype=data.dtype).cuda()
+            ret = to_device(torch.full((count,) + data.shape[1:], fill, dtype=data.dtype))
             ret[index, :] = data
         return ret
 
@@ -124,12 +129,12 @@ class AnchorTargetCreator(torch.nn.Module):
 if __name__ == "__main__":
     from utils.anchor import generate_anchor_base, enumerate_shifted_anchor
 
-    test_bbox = torch.asarray([[20, 30, 400, 500], [300, 400, 500, 600]]).float()  # [y1, x1, y2, x2] format
+    test_bbox = to_device(torch.asarray([[20, 30, 400, 500], [300, 400, 500, 600]])).float()  # [y1, x1, y2, x2] format
 
     ang_base = generate_anchor_base()
     ang_pattern = enumerate_shifted_anchor(ang_base, 16, 50, 50)
 
     at = AnchorTargetCreator()
     locs, labs = at(test_bbox, ang_pattern, (800, 800))
-    print(locs.shape)
-    print(labs.shape)
+    print(locs)
+    print(labs)

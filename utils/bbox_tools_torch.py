@@ -74,9 +74,9 @@ def bbox_iou(bbox_a: Tensor, bbox_b: Tensor) -> Tensor:
         raise IndexError
 
     # top left
-    tl = torch.maximum(bbox_a[..., :2], bbox_b[..., :2])
+    tl = torch.maximum(bbox_a[..., None, :2], bbox_b[..., :2])
     # bottom right
-    br = torch.minimum(bbox_a[..., 2:], bbox_b[..., 2:])
+    br = torch.minimum(bbox_a[..., None, 2:], bbox_b[..., 2:])
 
     area_a = torch.prod(bbox_a[..., 2:] - bbox_a[..., :2], dim=-1)
     area_b = torch.prod(bbox_b[..., 2:] - bbox_b[..., :2], dim=-1)

@@ -7,8 +7,14 @@ class TrainPlan(object):
         cfg = self.get_dataset_cfg(cfg_file)
         self.image_index_file = cfg["image_index_file"]
         self.annot_encode_folder = cfg["annot_encode_folder"]
+        self.save_file = cfg["save_file"]
+        self.pre_train = cfg["pre_train"]
         self.labels = cfg["labels"]
+
         self.input_size = cfg["input_size"]
+        self.anchor_base_size = cfg["anchor_base_size"]
+        self.anchor_ratios = cfg["anchor_ratios"]
+        self.anchor_scales = cfg["anchor_scales"]
 
         self.enhance = cfg["enhance"]
 

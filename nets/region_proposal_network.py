@@ -12,7 +12,6 @@ class RegionProposalNetwork(nn.Module):
     forward预测候选框
     在输入的特征图上，构造了一个分类分支和一个坐标回归分支
     """
-
     def __init__(self,
                  in_channels=512,
                  mid_channels=512,
@@ -42,7 +41,6 @@ class RegionProposalNetwork(nn.Module):
         x_relu = f.relu(self.conv(x))
         pred_cls_scores = torch.sigmoid(self.confidence_classify_layer(x_relu))  # [B,50*50*9,2]
         pred_locations = self.location_regression_layer(x_relu)  # [B,50,50*9,4]
-        # Todo Sigmoid or Softmax ?
 
         pred_locations = pred_locations.permute(0, 2, 3, 1) \
             .contiguous() \

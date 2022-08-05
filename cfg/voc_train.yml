@@ -1,17 +1,22 @@
 # data
 image_index_file: F:\PASCALVOC\VOC2012\myData_train.txt
 annot_encode_folder: F:\PASCALVOC\VOC2012\labels
+save_file: F:\SaveModels\FasterRCNN\voc.pth
+pre_train: True
 
 labels: [ "aeroplane",  "bicycle", "bird", "boat","bottle",
           "bus",    "car",  "cat",   "chair",   "cow",
           "diningtable",  "dog",  "horse",  "motorbike",  "person",
           "pottedplant", "sheep",   "sofa", "train", "tvmonitor" ]
 input_size: 800
+anchor_base_size: 16
+anchor_ratios: [0.5, 1, 2]
+anchor_scales: [8, 16, 32]
 # enhance
 enhance: False
 
 # training
-epoch: 10
+epoch: 100
 batch_size: 16
 learning_rate: 0.001
 

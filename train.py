@@ -5,14 +5,16 @@ import time
 
 from cfg.plan_config import TrainPlan
 from dataset.dataset_generator import ImageDataSet
+from loss.final_loss import FinalLoss
 from loss.rpn_loss import RPNLoss
+from loss.roi_loss import ROILoss
 from main.faster_rcnn import FasterRCNN
 from targets.anchor_target_creator import AnchorTargetCreator
 from utils.anchor import generate_anchor_base, enumerate_shifted_anchor
 from utils.to_tensor import cvt_module
 
 net = cvt_module(FasterRCNN())
-rpn_loss = cvt_module(RPNLoss())
+loss_net = cvt_module(ROILoss())
 anchor_target_creator = AnchorTargetCreator()
 
 anchor = enumerate_shifted_anchor(generate_anchor_base(), 16, 50, 50)
@@ -45,7 +47,7 @@ for epoch in range(trainPlan.epoch):  # loop over the dataset multiple times
         optimizer.zero_grad()
 
         # forward
-        rpn_scores, rpn_locs, roi_cls_locs, roi_scores = net(inputs, labels, bboxes, anchor)
+        rpn_scores, rpn_locs, roi_cls_locs, roi_scores, gt_roi_locs, gt_roi_labels = net(inputs, labels, bboxes, anchor)
         gt_rpn_loc_c = []
         gt_rpn_label_c = []
         for b in range(batch_size):
@@ -55,7 +57,22 @@ for epoch in range(trainPlan.epoch):  # loop over the dataset multiple times
         gt_rpn_label = torch.concat(gt_rpn_label_c, dim=0)
         gt_rpn_loc = torch.concat(gt_rpn_loc_c, dim=0)
 
-        loss = rpn_loss(rpn_scores.view(-1, 2), rpn_locs.view(-1, 4), gt_rpn_label.view(-1), gt_rpn_loc.view(-1, 4))
+        # loss = loss_net(rpn_scores.view(-1, 2),
+        #                 rpn_locs.view(-1, 4),
+        #                 gt_rpn_label.view(-1),
+        #                 gt_rpn_loc.view(-1, 4), )
+        loss = loss_net(roi_scores,
+                        roi_cls_locs,
+                        gt_roi_labels.view(-1),
+                        gt_roi_locs)
+        # loss = final_loss(rpn_scores.view(-1, 2),
+        #                   rpn_locs.view(-1, 4),
+        #                   roi_scores,
+        #                   roi_cls_locs,
+        #                   gt_rpn_label.view(-1),
+        #                   gt_rpn_loc.view(-1, 4),
+        #                   gt_roi_labels.view(-1),
+        #                   gt_roi_locs)
         # backward
         loss.backward()
 

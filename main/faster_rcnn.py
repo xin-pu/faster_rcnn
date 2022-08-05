@@ -62,6 +62,8 @@ class FasterRCNN(nn.Module):
 
         sample_rois = []
         sample_roi_indices = []
+        gt_roi_loc_array = []
+        gt_roi_label_array = []
         for b in range(batch):
             roi_indices = torch.where(pred_roi_indices == b)[0]
             sample_roi, gt_roi_loc, gt_roi_label = self.proposal_target_creator(
@@ -73,13 +75,16 @@ class FasterRCNN(nn.Module):
             sample_rois.append(sample_roi)
             i = torch.full((sample_roi.shape[0], 1), b)
             sample_roi_indices.append(to_device(i.long()))
+            gt_roi_loc_array.append(gt_roi_loc)
+            gt_roi_label_array.append(gt_roi_label)
 
         sample_roi_t = torch.concat(sample_rois, dim=0)
         sample_roi_indices_t = torch.concat(sample_roi_indices, dim=0)
         sample_roi_indices_t = sample_roi_indices_t.view(sample_roi_t.shape[0])
         roi_cls_locs, roi_scores = self.head(feature, sample_roi_t, sample_roi_indices_t)
-
-        return pred_scores, pred_locs, roi_cls_locs, roi_scores
+        gt_roi_locs = torch.concat(gt_roi_loc_array, dim=0)
+        gt_roi_labels = torch.concat(gt_roi_label_array, dim=0)
+        return pred_scores, pred_locs, roi_cls_locs, roi_scores, gt_roi_locs, gt_roi_labels
 
 
 if __name__ == "__main__":

@@ -10,23 +10,23 @@ class ROILoss(torch.nn.Module):
         self.roi_lambda = roi_lambda
 
     def forward(self,
-                roi_cls_score: Tensor,
-                roi_cls_loc: Tensor,
+                roi_scores: Tensor,
+                roi_locs: Tensor,
                 gt_roi_labels: Tensor,
                 gt_roi_locs: Tensor):
         gt_roi_label = gt_roi_labels.long()
-        cls_loss = f.cross_entropy(roi_cls_score, gt_roi_label)
+        roi_cls_loss = f.cross_entropy(roi_scores, gt_roi_label)
 
-        n_sample = roi_cls_loc.shape[0]
-        roi_loc = roi_cls_loc.view(n_sample, -1, 4)
+        n_sample = roi_locs.shape[0]
+        roi_loc = roi_locs.view(n_sample, -1, 4)
         roi_loc = roi_loc[torch.arange(0, n_sample).long(), gt_roi_label]  # 我们将只使用带有正标签的边界框
 
         x = torch.abs(gt_roi_locs - roi_loc)
-        rpn_loc_loss = ((x < 1).float() * 0.5 * x ** 2) + ((x >= 1).float() * (x - 0.5))
-        n_reg = rpn_loc_loss.float().sum()  # ignore gt_label==-1 for rpn_loss
-        rpn_loc_loss = rpn_loc_loss.sum() / n_reg
+        roi_loc_loss = ((x < 1).float() * 0.5 * x ** 2) + ((x >= 1).float() * (x - 0.5))
+        n_reg = roi_loc_loss.float().sum()  # ignore gt_label==-1 for rpn_loss
+        roi_loc_loss = roi_loc_loss.sum() / n_reg
 
-        return cls_loss + self.roi_lambda * rpn_loc_loss
+        return roi_cls_loss + self.roi_lambda * roi_loc_loss
 
 
 if __name__ == "__main__":

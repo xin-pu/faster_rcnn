@@ -44,7 +44,7 @@ class ImageDataSet(Dataset):
 
         annot_file = self.annot_files[index]
         data = pd.read_csv(annot_file, sep=' ', header=None).iloc[:, :].values
-        label_bboxes = torch.asarray(data).view(-1, 5)
+        label_bboxes = torch.asarray(data).float().view(-1, 5)
 
         labels = label_bboxes[..., 0:1]
         bboxes = self.cvt_bbox(label_bboxes[..., 1:], (scale_height, scale_width))

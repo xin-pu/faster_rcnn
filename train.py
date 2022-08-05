@@ -9,21 +9,23 @@ from loss.rpn_loss import RPNLoss
 from main.faster_rcnn import FasterRCNN
 from targets.anchor_target_creator import AnchorTargetCreator
 from utils.anchor import generate_anchor_base, enumerate_shifted_anchor
+from utils.to_tensor import cvt_module
 
-net = FasterRCNN().cuda()
-rpn_loss = RPNLoss().cuda()
-anchor_target_creator = AnchorTargetCreator().cuda()
-anchor = enumerate_shifted_anchor(generate_anchor_base(), 16, 50, 50).cuda()
+net = cvt_module(FasterRCNN())
+rpn_loss = cvt_module(RPNLoss())
+anchor_target_creator = AnchorTargetCreator()
+
+anchor = enumerate_shifted_anchor(generate_anchor_base(), 16, 50, 50)
 
 trainPlan = TrainPlan("cfg/voc_train.yml")
 
 dataset = ImageDataSet(trainPlan)
-dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+dataloader = DataLoader(dataset, batch_size=trainPlan.batch_size, shuffle=True)
 data_batch_epoch = dataloader.__len__()
 
-optimizer = optim.NAdam(net.parameters(), lr=0.001)
+optimizer = optim.NAdam(net.parameters(), lr=trainPlan.learning_rate)
 
-for epoch in range(100):  # loop over the dataset multiple times
+for epoch in range(trainPlan.epoch):  # loop over the dataset multiple times
     time_start = time.time()
     running_loss = 0.0
 
@@ -43,7 +45,7 @@ for epoch in range(100):  # loop over the dataset multiple times
         optimizer.zero_grad()
 
         # forward
-        rpn_scores, rpn_locs = net(inputs, labels, bboxes, anchor)
+        rpn_scores, rpn_locs, roi_cls_locs, roi_scores = net(inputs, labels, bboxes, anchor)
         gt_rpn_loc_c = []
         gt_rpn_label_c = []
         for b in range(batch_size):

@@ -8,13 +8,13 @@ class TrainPlan(object):
         self.image_index_file = cfg["image_index_file"]
         self.annot_encode_folder = cfg["annot_encode_folder"]
         self.labels = cfg["labels"]
-        self.min_size = cfg["min_size"]
-        self.max_size = cfg["max_size"]
+        self.input_size = cfg["input_size"]
 
         self.enhance = cfg["enhance"]
 
         self.epoch = cfg["epoch"]
         self.batch_size = cfg["batch_size"]
+        self.learning_rate = cfg["learning_rate"]
         self.val_split = cfg["val_split"]
 
         self.rpn_sigma = cfg["rpn_sigma"]

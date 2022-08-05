@@ -6,6 +6,7 @@ from nets.backbone import get_feature_extractor_classifier
 from nets.region_proposal_network import RegionProposalNetwork
 from nets.roi_pooling import VGG16RoIHead
 from targets.proposal_target_creator import ProposalTargetCreator
+from utils.to_tensor import to_device
 
 
 def no_grad(fun):
@@ -53,30 +54,40 @@ class FasterRCNN(nn.Module):
 
     def forward(self, x, labels, bbox, anchor, scale=1.):
         img_size = x.shape[2:]
+        batch = x.shape[0]
 
         feature = self.feature_extractor(x)
 
         pred_scores, pred_locs, pred_rois, pred_roi_indices = self.rpn(feature, img_size, anchor, scale)
 
-        # sample_roi, gt_roi_loc, gt_roi_label = self.proposal_target_creator(
-        #     pred_rois,
-        #     bbox,
-        #     labels,
-        #     self.loc_normalize_mean,
-        #     self.loc_normalize_std)
-        #
-        # roi_cls_locs, roi_scores = self.head(feature, sample_roi, pred_roi_indices)
+        sample_rois = []
+        sample_roi_indices = []
+        for b in range(batch):
+            roi_indices = torch.where(pred_roi_indices == b)[0]
+            sample_roi, gt_roi_loc, gt_roi_label = self.proposal_target_creator(
+                pred_rois[roi_indices],
+                bbox[b, ...],
+                labels[b, ...],
+                self.loc_normalize_mean,
+                self.loc_normalize_std)
+            sample_rois.append(sample_roi)
+            i = torch.full((sample_roi.shape[0], 1), b)
+            sample_roi_indices.append(to_device(i.long()))
 
-        # return roi_cls_locs, roi_scores, pred_rois, pred_roi_indices
-        return pred_scores, pred_locs
+        sample_roi_t = torch.concat(sample_rois, dim=0)
+        sample_roi_indices_t = torch.concat(sample_roi_indices, dim=0)
+        sample_roi_indices_t = sample_roi_indices_t.view(sample_roi_t.shape[0])
+        roi_cls_locs, roi_scores = self.head(feature, sample_roi_t, sample_roi_indices_t)
+
+        return pred_scores, pred_locs, roi_cls_locs, roi_scores
 
 
 if __name__ == "__main__":
     f_rcnn = FasterRCNN()
 
     inputImage = torch.Tensor(1, 3, 800, 800).float()
-    a, b, c, d = f_rcnn(inputImage)
-    print(a.shape)
-    print(b.shape)
-    print(c.shape)
-    print(d.shape)
+    # ps, pl, rc, rs = f_rcnn(inputImage)
+    # print(ps.shape)
+    # print(pl.shape)
+    # print(rc.shape)
+    # print(rs.shape)

@@ -13,8 +13,10 @@ from targets.anchor_target_creator import AnchorTargetCreator
 from utils.anchor import generate_anchor_base, enumerate_shifted_anchor
 from utils.to_tensor import cvt_module
 
+torch.autograd.set_detect_anomaly(True)
+
 net = cvt_module(FasterRCNN())
-loss_net = cvt_module(ROILoss())
+loss_net = cvt_module(FinalLoss())
 anchor_target_creator = AnchorTargetCreator()
 
 anchor = enumerate_shifted_anchor(generate_anchor_base(), 16, 50, 50)
@@ -61,18 +63,18 @@ for epoch in range(trainPlan.epoch):  # loop over the dataset multiple times
         #                 rpn_locs.view(-1, 4),
         #                 gt_rpn_label.view(-1),
         #                 gt_rpn_loc.view(-1, 4), )
-        loss = loss_net(roi_scores,
+        # loss = loss_net(roi_scores,
+        #                 roi_cls_locs,
+        #                 gt_roi_labels.view(-1),
+        #                 gt_roi_locs)
+        loss = loss_net(rpn_scores.view(-1, 2),
+                        rpn_locs.view(-1, 4),
+                        roi_scores,
                         roi_cls_locs,
+                        gt_rpn_label.view(-1),
+                        gt_rpn_loc.view(-1, 4),
                         gt_roi_labels.view(-1),
                         gt_roi_locs)
-        # loss = final_loss(rpn_scores.view(-1, 2),
-        #                   rpn_locs.view(-1, 4),
-        #                   roi_scores,
-        #                   roi_cls_locs,
-        #                   gt_rpn_label.view(-1),
-        #                   gt_rpn_loc.view(-1, 4),
-        #                   gt_roi_labels.view(-1),
-        #                   gt_roi_locs)
         # backward
         loss.backward()
 

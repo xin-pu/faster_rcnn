@@ -2,6 +2,7 @@ import torch
 import torchvision.ops
 
 from utils.bbox_tools_torch import cvt_location_to_bbox
+from utils.to_tensor import to_device
 
 
 class ProposalCreator(object):
@@ -58,10 +59,10 @@ class ProposalCreator(object):
 
         # 将回归值恢复到原图检测框
         roi = cvt_location_to_bbox(pred_locations, anchor)
-
-        # 尺寸裁剪至图像尺寸内
-        roi[:, slice(0, 4, 2)] = torch.clip(roi[:, slice(0, 4, 2)], 0, img_size[0])
-        roi[:, slice(1, 4, 2)] = torch.clip(roi[:, slice(1, 4, 2)], 0, img_size[1])
+        roi_new = to_device(torch.empty_like(roi))
+        # Fixed bug 梯度原地踏步 尺寸裁剪至图像尺寸内
+        roi_new[:, slice(0, 4, 2)] = torch.clip(roi[:, slice(0, 4, 2)], 0, img_size[0])
+        roi_new[:, slice(1, 4, 2)] = torch.clip(roi[:, slice(1, 4, 2)], 0, img_size[1])
 
         # 先按 min_size_threshold 抑制不符合的候选框
         min_size = self.min_size_threshold * scale

@@ -38,12 +38,11 @@ class RegionProposalNetwork(nn.Module):
 
     def forward(self, x, image_size, anchor, scale=1.):
 
-        x = f.relu(self.conv(x))
-        pred_cls_scores = torch.sigmoid(self.confidence_classify_layer(x))  # [B,50*50*9,2]
-        pred_locations = self.location_regression_layer(x)  # [B,50,50*9,4]
-        # Todo Sigmoid or Softmax ?
-
         batch_size, _, height, width = x.shape
+        x_relu = f.relu(self.conv(x))
+        pred_cls_scores = torch.sigmoid(self.confidence_classify_layer(x_relu))  # [B,50*50*9,2]
+        pred_locations = self.location_regression_layer(x_relu)  # [B,50,50*9,4]
+        # Todo Sigmoid or Softmax ?
 
         pred_locations = pred_locations.permute(0, 2, 3, 1) \
             .contiguous() \

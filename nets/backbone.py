@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from torchvision.models import vgg16, VGG16_Weights
 
-from utils.anchor import generate_anchor_base
 from utils.to_tensor import to_device
 
 
@@ -46,7 +45,3 @@ if __name__ == "__main__":
     images = to_device(torch.Tensor(1, 3, 800, 800)).float()
     features = fe_extractor(images)
     print(features)
-
-    # anchors: [9,4]
-    anchors = generate_anchor_base(base_size=16)
-    print(anchors)

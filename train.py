@@ -9,8 +9,8 @@ from cfg.plan_config import TrainPlan
 from dataset.dataset_generator import ImageDataSet
 from loss.final_loss import FinalLoss
 from main.faster_rcnn import FasterRCNN
+from targets.anchor_creator import AnchorCreator
 from targets.anchor_target_creator import AnchorTargetCreator
-from utils.anchor import generate_anchor_base, enumerate_shifted_anchor
 from utils.to_tensor import cvt_module
 
 
@@ -26,9 +26,13 @@ class Train(object):
         loss_net = cvt_module(FinalLoss())
         optimizer = optim.NAdam(net.parameters(), lr=train_plan.learning_rate)
 
-        anchor = self.get_anchor_base()
+        anchor_creator = AnchorCreator()
         anchor_target_creator = AnchorTargetCreator()
 
+        anchor = anchor_creator(train_plan.anchor_base_size,
+                                train_plan.anchor_ratios,
+                                train_plan.anchor_scales,
+                                train_plan.input_size)
         data_batch_epoch = dataloader.__len__()
         epoch = train_plan.epoch
         image_size = (train_plan.input_size, train_plan.input_size)
@@ -86,7 +90,7 @@ class Train(object):
 
                 print(end="\033\rEpoch: {:05d}\tBatch: {:05d}\tLoss: {:>.4f}\tPer:{:>.2f}%\tCost:{:.0f}s\tRest:{:.0f}s"
                       .format(epoch + 1, i, ave_loss, per, cost_time, rest_time))
-            torch.save(net.state_dict(), trainPlan.save_file)
+            torch.save(net.state_dict(), self.train_plan.save_file)
             print("\r\n")
 
     def get_model(self):
@@ -97,13 +101,6 @@ class Train(object):
             model.load_state_dict(torch.load(pre_weights))
             print("load from {}".format(pre_weights))
         return model
-
-    def get_anchor_base(self):
-        base_size, rations, scales = self.train_plan.anchor_base_size, self.train_plan.anchor_ratios, \
-                                     self.train_plan.anchor_scales
-        grid_height = grid_width = self.train_plan.input_size / base_size
-        anchor_base = generate_anchor_base(base_size, rations, scales)
-        return enumerate_shifted_anchor(anchor_base, base_size, grid_height, grid_width)
 
     def get_dataloader(self):
         dataset = ImageDataSet(self.train_plan)

@@ -127,14 +127,13 @@ class AnchorTargetCreator(torch.nn.Module):
 
 
 if __name__ == "__main__":
-    from utils.anchor import generate_anchor_base, enumerate_shifted_anchor
+    from targets.anchor_creator import AnchorCreator
 
     test_bbox = to_device(torch.asarray([[20, 30, 400, 500], [300, 400, 500, 600]])).float()  # [y1, x1, y2, x2] format
 
-    ang_base = generate_anchor_base()
-    ang_pattern = enumerate_shifted_anchor(ang_base, 16, 50, 50)
+    ang_pattern = AnchorCreator()()
 
     at = AnchorTargetCreator()
     locs, labs = at(test_bbox, ang_pattern, (800, 800))
-    print(locs)
-    print(labs)
+    print(locs.shape)
+    print(labs.shape)

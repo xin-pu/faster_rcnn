@@ -2,10 +2,10 @@ from torch import nn
 from torchvision.ops import RoIPool
 import torch
 
+from targets.anchor_creator import AnchorCreator
+
+
 # Todo 对候选框区域的特征图为输入，预测目标框的类别概率和坐标
-from utils.anchor import enumerate_shifted_anchor, generate_anchor_base
-
-
 class VGG16RoIHead(nn.Module):
     """
     目的是执行从不均匀大小到 固定大小的特征地图（feature maps） (例如 7×7)的输入的最大范围池。
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     cls = cls.cuda()
     rpn = RegionProposalNetwork(512, 512).cuda()
     head = VGG16RoIHead(classifier=cls, n_class=21, roi_size=7, spatial_scale=16).cuda()
-    anchor = enumerate_shifted_anchor(generate_anchor_base(), 16, 50, 50)
+    anchor = AnchorCreator()()
     fe = fe_extractor(image)
     pred_scores_, pred_locs_, pred_rois_, pred_roi_indices_ = rpn(fe, image.shape[2:], anchor)
     print(pred_scores_.shape)

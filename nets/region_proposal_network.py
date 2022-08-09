@@ -3,7 +3,7 @@ from torch.nn import functional as f
 
 from nets.backbone import get_feature_extractor_classifier
 from targets.proposal_creator import ProposalCreator
-from utils.anchor import *
+import torch
 
 
 class RegionProposalNetwork(nn.Module):
@@ -12,6 +12,7 @@ class RegionProposalNetwork(nn.Module):
     forward预测候选框
     在输入的特征图上，构造了一个分类分支和一个坐标回归分支
     """
+
     def __init__(self,
                  in_channels=512,
                  mid_channels=512,

@@ -1,7 +1,6 @@
 from torch import nn
 from torch.nn import functional as f
 
-from nets.backbone import get_feature_extractor_classifier
 from targets.proposal_creator import ProposalCreator
 import torch
 
@@ -16,16 +15,15 @@ class RegionProposalNetwork(nn.Module):
     def __init__(self,
                  in_channels=512,
                  mid_channels=512,
-                 ratios=(0.5, 1, 2),
-                 anchor_scales=(8, 16, 32),
-                 feat_stride=16):
+                 feat_stride=16,
+                 base_anchor_length=9):
         super(RegionProposalNetwork, self).__init__()
 
         self.feat_stride = feat_stride
 
         self.conv = nn.Conv2d(in_channels, mid_channels, 3, 1, 1)
-        self.location_regression_layer = nn.Conv2d(mid_channels, 9 * 4, 1, 1, 0)  # 卷积层=》坐标
-        self.confidence_classify_layer = nn.Conv2d(mid_channels, 9 * 2, 1, 1, 0)  # 卷积层=》正负样本分类
+        self.location_regression_layer = nn.Conv2d(mid_channels, base_anchor_length * 4, 1, 1, 0)  # 卷积层=》坐标
+        self.confidence_classify_layer = nn.Conv2d(mid_channels, base_anchor_length * 2, 1, 1, 0)  # 卷积层=》正负样本分类
         self.proposal_layer = ProposalCreator()
 
         # 初始化各层参数
@@ -73,12 +71,21 @@ class RegionProposalNetwork(nn.Module):
 
 
 if __name__ == "__main__":
-    image = torch.Tensor(1, 3, 800, 800)
-    # [22500,4] = [50*50*9,4]
-    fe, _ = get_feature_extractor_classifier()
-    feature = fe(image)
+    from nets.backbone import get_feature_extractor_classifier
+    from targets.anchor_creator import AnchorCreator
+    from utils.to_tensor import cvt_module, to_device
 
+    image = to_device(torch.Tensor(1, 3, 800, 800))
+    # [22500,4] = [50*50*9,4]
+    backbone, _ = get_feature_extractor_classifier()
+    backbone = cvt_module(backbone)
+    feature = backbone(image)
+
+    ac = AnchorCreator()
     rpn = RegionProposalNetwork(512, 512)
-    pred_scores, pred_locs, pred_rois, pred_roi_indices = rpn(feature, image.shape[2:])
+    rpn = cvt_module(rpn)
+
+    anchors = ac()
+    pred_scores, pred_locs, pred_rois, pred_roi_indices = rpn(feature, image.shape[2:], anchors)
     print("rpn_cls:{}\r\nrpn_loc:{}".format(pred_scores.shape, pred_locs.shape, pred_rois.shape))
     print("rois:{}\r\nroi_indices:{}".format(pred_rois.shape, pred_roi_indices.shape))

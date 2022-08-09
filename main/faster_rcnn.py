@@ -9,27 +9,11 @@ from targets.proposal_target_creator import ProposalTargetCreator
 from utils.to_tensor import to_device
 
 
-def no_grad(fun):
-    """
-    装饰器模式，不执行梯度
-    :param fun: 传入方法
-    :return: 装饰后方法
-    """
-
-    def new_f(*args, **kwargs):
-        with t.no_grad():
-            return fun(*args, **kwargs)
-
-    return new_f
-
-
 class FasterRCNN(nn.Module):
 
     def __init__(self,
                  feat_stride=16,
                  n_fg_class=20,
-                 ratios=(0.5, 1, 2),
-                 anchor_scales=(8, 16, 32),
                  loc_normalize_mean=(0., 0., 0., 0.),
                  loc_normalize_std=(0.1, 0.1, 0.2, 0.2)):
         super(FasterRCNN, self).__init__()
@@ -40,9 +24,8 @@ class FasterRCNN(nn.Module):
         extractor, classifier = get_feature_extractor_classifier()
 
         self.feature_extractor = extractor
-        self.rpn = RegionProposalNetwork(512, 512,
-                                         ratios=ratios,
-                                         anchor_scales=anchor_scales,
+        self.rpn = RegionProposalNetwork(512,
+                                         512,
                                          feat_stride=feat_stride)
 
         self.head = VGG16RoIHead(n_class=n_fg_class + 1,

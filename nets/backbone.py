@@ -39,9 +39,9 @@ if __name__ == "__main__":
     # So RPN Input Unit is 512
     fe_extractor, cls = get_feature_extractor_classifier()
     print(fe_extractor)
-    print(cls)
+
     fe_extractor = fe_extractor.cuda()
-    cls = cls.cuda()
+
     images = to_device(torch.Tensor(1, 3, 800, 800)).float()
     features = fe_extractor(images)
-    print(features)
+    print(features.shape)

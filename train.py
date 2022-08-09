@@ -62,7 +62,7 @@ class Train(object):
                 gt_rpn_loc_c = []
                 gt_rpn_label_c = []
                 for b in range(batch_size):
-                    gt_rpn_loc, gt_rpn_label = anchor_target_creator(bboxes[b], anchor, image_size)
+                    gt_rpn_loc, gt_rpn_label = anchor_target_creator(anchor, bboxes[b], image_size)
                     gt_rpn_loc_c.append(gt_rpn_loc.unsqueeze(0))
                     gt_rpn_label_c.append(gt_rpn_label.unsqueeze(0))
                 gt_rpn_label = torch.concat(gt_rpn_label_c, dim=0)

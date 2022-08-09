@@ -30,9 +30,9 @@ class AnchorTargetCreator(torch.nn.Module):
         self.neg_iou_thresh = neg_iou_thresh
         self.pos_ratio = pos_ratio
 
-    def forward(self, bbox, anchor, img_size):
+    def forward(self, anchor, bbox, img_size):
         """
-        根据图像输入的bbox,对其Anchor Box定位
+        对anchor boxes分配标签和位置
         :param bbox: Bound Box坐标，【R,4】 R 是 BoundBox 数量
         :param anchor: Anchor Box 坐标 【S,4】 S 是 Anchor 数量
         :param img_size: 图像尺寸
@@ -41,60 +41,60 @@ class AnchorTargetCreator(torch.nn.Module):
         img_h, img_w = img_size
         n_anchor = len(anchor)
 
+        # 找到有效的anchor boxes的索引，并且生成索引数组，
         inside_index = self.get_inside_index(anchor, img_h, img_w)
+        # 生成有效anchor boxes数组：
         anchor = anchor[inside_index]
-        argmax_ious, label = self.create_label(inside_index, anchor, bbox)
-
-        # compute bounding box regression targets
+        # 分配标签数组
+        label, argmax_ious = self.create_label(inside_index, anchor, bbox)
+        # 为所有有效的anchor box分配anchor locs，而不考虑其标签
         loc = cvt_bbox_to_location(anchor, bbox[argmax_ious])
 
-        # map up to original set of anchors
-        label = self.unmap(label, n_anchor, inside_index, fill=-1)
-        loc = self.unmap(loc, n_anchor, inside_index, fill=0)
+        # 用inside_index变量将他们映射到原始的anchors，无效的anchor box标签填充-1（忽略），位置填充0
+        #
+        anchor_labels = to_device(torch.full((n_anchor,), -1, dtype=label.dtype))
+        anchor_labels[inside_index] = label
 
-        return loc, label
+        anchor_locations = to_device(torch.full((n_anchor, loc.shape[1]), 0, dtype=loc.dtype))
+        anchor_locations[inside_index, :] = loc
+
+        return anchor_locations, anchor_labels
 
     def create_label(self, inside_index, anchor, bbox):
-        argmax_ious, max_ious, gt_argmax_ious = self.calc_ious(anchor, bbox, inside_index)
+        # 计算IOU
+        ious = bbox_iou(anchor, bbox)  # [M,N]
+
+        # Case 1 确定每个Ground-truth-Bbox 对应的各自最大IOU的 Anchor-Bbox
+        gt_max_ious, gt_argmax_ious = ious.max(dim=0)
+        # Case 2 确定每个Anchor-Bbox 对应的各自IOU最大的 Ground-truth-Bbox
+        max_ious, argmax_ious = ious.max(dim=1)
+        # 确定有max_ious的anchor_boxes（gt_max_ious) 会有多个Anchor BBox与 Ground Truth BBox具有同样的最大的重叠度
+        gt_argmax_ious = torch.where(ious == gt_max_ious)[0]
 
         # 初始默认为忽略 -1
-        label = to_device(torch.zeros((len(inside_index),))).long() - 1
-        # 分配负标签（0）给max_iou小于负阈值[c]的所有anchor boxes：
-        label[max_ious < self.neg_iou_thresh] = 0
+        label = to_device(torch.full((len(inside_index),), -1).long())
         # 分配正标签（1）给与ground-truth box[a]的IoU重叠最大的anchor boxes：
         label[gt_argmax_ious] = 1
         # 分配正标签（1）给max_iou大于positive阈值[b]的anchor boxes：
         label[max_ious >= self.pos_iou_thresh] = 1
+        # 分配负标签（0）给max_iou小于负阈值[c]的所有anchor boxes：
+        label[max_ious < self.neg_iou_thresh] = 0
 
         # 如果正样本过多，随机采样正样本，
         n_pos = int(self.pos_ratio * self.n_sample)
         pos_index = torch.where(label == 1)[0]
         if len(pos_index) > n_pos:
             indices = torch.randperm(len(pos_index))[:(len(pos_index) - n_pos)]
-            disable_index = pos_index[indices]
-            label[disable_index] = -1
+            label[pos_index[indices]] = -1
 
         # 如果负样本过多，随机采样负样本，
         n_neg = self.n_sample - torch.sum(label == 1)
         neg_index = torch.where(label == 0)[0]
         if len(neg_index) > n_neg:
             indices = torch.randperm(len(neg_index))[:(len(neg_index) - n_neg)]
-            disable_index = neg_index[indices]
-            label[disable_index] = -1
+            label[neg_index[indices]] = -1
 
-        return argmax_ious, label
-
-    @staticmethod
-    def calc_ious(anchor, bbox, inside_index):
-        # ious between the anchors and the gt boxes
-        ious = bbox_iou(anchor, bbox)
-        argmax_ious = ious.argmax(dim=1)
-        max_ious = ious[torch.arange(len(inside_index)), argmax_ious]
-        gt_argmax_ious = ious.argmax(dim=0)
-        gt_max_ious = ious[gt_argmax_ious, torch.arange(ious.shape[1])]
-        gt_argmax_ious = torch.where(ious == gt_max_ious)[0]
-
-        return argmax_ious, max_ious, gt_argmax_ious
+        return label, argmax_ious,
 
     @staticmethod
     def get_inside_index(anchor, h, w):
@@ -112,19 +112,6 @@ class AnchorTargetCreator(torch.nn.Module):
             (anchor[:, 3] <= w))[0]
         return index_inside
 
-    @staticmethod
-    def unmap(data, count, index, fill=0):
-        # Unmap a subset of item (data) back to the original set of items (of
-        # size count)
-
-        if len(data.shape) == 1:
-            ret = to_device(torch.full((count,), fill, dtype=data.dtype))
-            ret[index] = data
-        else:
-            ret = to_device(torch.full((count,) + data.shape[1:], fill, dtype=data.dtype))
-            ret[index, :] = data
-        return ret
-
 
 if __name__ == "__main__":
     from targets.anchor_creator import AnchorCreator
@@ -133,7 +120,7 @@ if __name__ == "__main__":
 
     ang_pattern = AnchorCreator()()
 
-    at = AnchorTargetCreator()
-    locs, labs = at(test_bbox, ang_pattern, (800, 800))
+    anchor_target_creator = AnchorTargetCreator()
+    locs, labs = anchor_target_creator(ang_pattern, test_bbox, (800, 800))
     print(locs.shape)
     print(labs.shape)

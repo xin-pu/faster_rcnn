@@ -1,5 +1,5 @@
 import torch
-from utils.to_tensor import to_device
+from utils.to_tensor import cvt_tensor
 
 
 class AnchorCreator(object):
@@ -26,7 +26,7 @@ class AnchorCreator(object):
         py = base_size / 2.
         px = base_size / 2.
 
-        anchor_base = to_device(torch.zeros((len(ratios) * len(anchor_scales), 4)))
+        anchor_base = cvt_tensor(torch.zeros((len(ratios) * len(anchor_scales), 4)))
         for i in range(len(ratios)):
             for j in range(len(anchor_scales)):
                 h = base_size * anchor_scales[j] * torch.sqrt(torch.tensor(ratios[i]))
@@ -58,8 +58,8 @@ class AnchorCreator(object):
         :return:所有Anchor [Height*Width*A,4]
         """
 
-        shift_y = to_device(torch.arange(0, height * feat_stride, feat_stride))  # (0,800,16)
-        shift_x = to_device(torch.arange(0, width * feat_stride, feat_stride))  # (0,800,16)
+        shift_y = cvt_tensor(torch.arange(0, height * feat_stride, feat_stride))  # (0,800,16)
+        shift_x = cvt_tensor(torch.arange(0, width * feat_stride, feat_stride))  # (0,800,16)
         shift_x, shift_y = torch.meshgrid(shift_x, shift_y, indexing='ij')
         shift = torch.stack((shift_y.ravel(), shift_x.ravel(), shift_y.ravel(), shift_x.ravel()), dim=1)
 

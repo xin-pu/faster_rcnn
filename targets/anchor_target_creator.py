@@ -1,7 +1,7 @@
 import torch
 
 from utils.bbox_tools_torch import cvt_bbox_to_location, bbox_iou
-from utils.to_tensor import to_device
+from utils.to_tensor import cvt_tensor
 
 
 class AnchorTargetCreator(torch.nn.Module):
@@ -51,10 +51,10 @@ class AnchorTargetCreator(torch.nn.Module):
         loc = cvt_bbox_to_location(anchor, bbox[argmax_ious])
 
         # 用inside_index变量将他们映射到原始的anchors，无效的anchor box标签填充-1（忽略），位置填充0
-        anchor_labels = to_device(torch.full((n_anchor,), -1, dtype=label.dtype))
+        anchor_labels = cvt_tensor(torch.full((n_anchor,), -1, dtype=label.dtype))
         anchor_labels[inside_index] = label
 
-        anchor_locations = to_device(torch.full((n_anchor, loc.shape[1]), 0, dtype=loc.dtype))
+        anchor_locations = cvt_tensor(torch.full((n_anchor, loc.shape[1]), 0, dtype=loc.dtype))
         anchor_locations[inside_index, :] = loc
 
         return anchor_locations, anchor_labels
@@ -71,7 +71,7 @@ class AnchorTargetCreator(torch.nn.Module):
         gt_argmax_ious = torch.where(ious == gt_max_ious)[0]
 
         # 初始默认为忽略 -1
-        label = to_device(torch.full((len(inside_index),), -1).long())
+        label = cvt_tensor(torch.full((len(inside_index),), -1).long())
         # 分配正标签（1）给与ground-truth box[a]的IoU重叠最大的anchor boxes：
         label[gt_argmax_ious] = 1
         # 分配正标签（1）给max_iou大于positive阈值[b]的anchor boxes：
@@ -115,7 +115,7 @@ class AnchorTargetCreator(torch.nn.Module):
 if __name__ == "__main__":
     from targets.anchor_creator import AnchorCreator
 
-    test_bbox = to_device(torch.asarray([[20, 30, 400, 500], [300, 400, 500, 600]])).float()  # [y1, x1, y2, x2] format
+    test_bbox = cvt_tensor(torch.asarray([[20, 30, 400, 500], [300, 400, 500, 600]])).float()  # [y1, x1, y2, x2] format
 
     ang_pattern = AnchorCreator()()
 

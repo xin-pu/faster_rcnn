@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torchvision.models import vgg16, VGG16_Weights
 
-from utils.to_tensor import to_device
+from utils.to_tensor import cvt_tensor
 
 
 def get_feature_extractor_classifier():
@@ -42,6 +42,6 @@ if __name__ == "__main__":
 
     fe_extractor = fe_extractor.cuda()
 
-    images = to_device(torch.Tensor(1, 3, 800, 800)).float()
+    images = cvt_tensor(torch.Tensor(1, 3, 800, 800)).float()
     features = fe_extractor(images)
     print(features.shape)

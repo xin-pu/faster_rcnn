@@ -72,9 +72,9 @@ class RegionProposalNetwork(nn.Module):
 if __name__ == "__main__":
     from nets.backbone import get_feature_extractor_classifier
     from targets.anchor_creator import AnchorCreator
-    from utils.to_tensor import cvt_module, to_device
+    from utils.to_tensor import cvt_module, cvt_tensor
 
-    image = to_device(torch.Tensor(1, 3, 800, 800))
+    image = cvt_tensor(torch.Tensor(1, 3, 800, 800))
     # [22500,4] = [50*50*9,4]
     backbone, _ = get_feature_extractor_classifier()
     backbone = cvt_module(backbone)

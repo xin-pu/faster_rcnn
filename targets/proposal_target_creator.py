@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor
 from utils.bbox_tools_torch import bbox_iou, cvt_bbox_to_location
-from utils.to_tensor import to_device
+from utils.to_tensor import cvt_tensor
 
 
 class ProposalTargetCreator(object):
@@ -82,16 +82,16 @@ class ProposalTargetCreator(object):
 
         # Compute offsets and scales to match sampled RoIs to the GTs.
         gt_roi_loc = cvt_bbox_to_location(sample_roi, bbox[gt_assignment[keep_index]])
-        gt_roi_loc = (gt_roi_loc - to_device(torch.asarray(loc_normalize_mean).float())) / \
-                     to_device(torch.asarray(loc_normalize_std).float())
+        gt_roi_loc = (gt_roi_loc - cvt_tensor(torch.asarray(loc_normalize_mean).float())) / \
+                     cvt_tensor(torch.asarray(loc_normalize_std).float())
 
         return sample_roi, gt_roi_loc, gt_roi_label
 
 
 if __name__ == "__main__":
-    rois = to_device(torch.tensor([[0, 0, 1, 1], [0, 0, 2, 2], [0, 0, 3, 3], [0, 0, 4, 4], [0, 0, 4, 5]]).float())
-    boxes = to_device(torch.tensor([[0, 0, 0.9, 1], [0, 0, 2.1, 2]]).float())
-    labels = to_device(torch.tensor([[3], [4]]).float())
+    rois = cvt_tensor(torch.tensor([[0, 0, 1, 1], [0, 0, 2, 2], [0, 0, 3, 3], [0, 0, 4, 4], [0, 0, 4, 5]]).float())
+    boxes = cvt_tensor(torch.tensor([[0, 0, 0.9, 1], [0, 0, 2.1, 2]]).float())
+    labels = cvt_tensor(torch.tensor([[3], [4]]).float())
 
     at = ProposalTargetCreator()
     a_, b_, c_ = at(rois, boxes, labels)

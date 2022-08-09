@@ -2,7 +2,7 @@ import torch
 import torchvision.ops
 
 from utils.bbox_tools_torch import cvt_location_to_bbox
-from utils.to_tensor import to_device
+from utils.to_tensor import cvt_tensor
 
 class ProposalCreator(object):
 
@@ -58,7 +58,7 @@ class ProposalCreator(object):
 
         # 将回归值恢复到原图检测框
         roi = cvt_location_to_bbox(pred_locations, anchor)
-        roi_new = to_device(torch.empty_like(roi))
+        roi_new = cvt_tensor(torch.empty_like(roi))
         # Fixed bug 梯度原地踏步 尺寸裁剪至图像尺寸内
         roi_new[:, slice(0, 4, 2)] = torch.clip(roi[:, slice(0, 4, 2)], 0, img_size[0])
         roi_new[:, slice(1, 4, 2)] = torch.clip(roi[:, slice(1, 4, 2)], 0, img_size[1])
@@ -88,9 +88,9 @@ if __name__ == "__main__":
     from nets.backbone import get_feature_extractor_classifier
     from targets.anchor_creator import AnchorCreator
     from nets.region_proposal_network import RegionProposalNetwork
-    from utils.to_tensor import cvt_module, to_device
+    from utils.to_tensor import cvt_module, cvt_tensor
 
-    image = to_device(torch.Tensor(1, 3, 800, 800))
+    image = cvt_tensor(torch.Tensor(1, 3, 800, 800))
     # [22500,4] = [50*50*9,4]
     backbone, _ = get_feature_extractor_classifier()
     backbone = cvt_module(backbone)

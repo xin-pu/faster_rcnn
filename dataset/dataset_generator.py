@@ -51,7 +51,7 @@ class ImageDataSet(Dataset):
         label_bboxes = torch.concat([labels, bboxes], dim=-1)
         bboxes_empty = torch.full((64 - label_bboxes.shape[0], 5), -1)
         label_bboxes = torch.concat([label_bboxes, bboxes_empty])
-        return to_device(image), to_device(label_bboxes)
+        return cvt_tensor(image), cvt_tensor(label_bboxes)
 
     @staticmethod
     def cvt_bbox(box: Tensor, scale: tuple):

@@ -6,7 +6,7 @@ from nets.backbone import get_feature_extractor_classifier
 from nets.region_proposal_network import RegionProposalNetwork
 from nets.roi_pooling import VGG16RoIHead
 from targets.proposal_target_creator import ProposalTargetCreator
-from utils.to_tensor import to_device
+from utils.to_tensor import cvt_tensor
 
 
 class FasterRCNN(nn.Module):
@@ -57,7 +57,7 @@ class FasterRCNN(nn.Module):
                 self.loc_normalize_std)
             sample_rois.append(sample_roi)
             i = torch.full((sample_roi.shape[0], 1), b)
-            sample_roi_indices.append(to_device(i.long()))
+            sample_roi_indices.append(cvt_tensor(i.long()))
             gt_roi_loc_array.append(gt_roi_loc)
             gt_roi_label_array.append(gt_roi_label)
 

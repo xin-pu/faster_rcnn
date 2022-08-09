@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor
 
-from utils.to_tensor import to_device
+from utils.to_tensor import cvt_tensor
 
 
 def cvt_location_to_bbox(pred_locations: Tensor, anchor_bbox: Tensor) -> Tensor:
@@ -17,7 +17,7 @@ def cvt_location_to_bbox(pred_locations: Tensor, anchor_bbox: Tensor) -> Tensor:
     :return: pred_bbox: 位置修正后的候选框 [y1,x1,y2,x2]
     """
     if anchor_bbox.shape[0] == 0:
-        return to_device(torch.zeros((0, 4), dtype=pred_locations.dtype))
+        return cvt_tensor(torch.zeros((0, 4), dtype=pred_locations.dtype))
 
     # 转换anchor格式从[y1, x1, y2, x2] 到 [ctr_x, ctr_y, h, w] ：
     anchor_height = anchor_bbox[..., 2] - anchor_bbox[..., 0]
@@ -37,7 +37,7 @@ def cvt_location_to_bbox(pred_locations: Tensor, anchor_bbox: Tensor) -> Tensor:
     pred_w = torch.exp(tw) * anchor_width.unsqueeze(-1)
 
     # 转换 [ctr_x, ctr_y, h, w]为[y1, x1, y2, x2]格式：
-    pred_bbox = to_device(torch.zeros(pred_locations.shape, dtype=pred_locations.dtype))
+    pred_bbox = cvt_tensor(torch.zeros(pred_locations.shape, dtype=pred_locations.dtype))
     pred_bbox[..., 0::4] = pred_y - 0.5 * pred_h
     pred_bbox[..., 1::4] = pred_x - 0.5 * pred_w
     pred_bbox[..., 2::4] = pred_y + 0.5 * pred_h
@@ -58,7 +58,7 @@ def cvt_bbox_to_location(anchor: Tensor, dst_bbox: Tensor) -> Tensor:
     base_ctr_x = dst_bbox[..., 1] + 0.5 * base_width
 
     eps_value = torch.finfo(anchor_height.dtype).eps
-    eps_tensor = to_device(torch.full(anchor_height.shape, eps_value))
+    eps_tensor = cvt_tensor(torch.full(anchor_height.shape, eps_value))
     anchor_height = torch.maximum(anchor_height, eps_tensor)
     anchor_width = torch.maximum(anchor_width, eps_tensor)
 

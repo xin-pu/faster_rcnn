@@ -5,7 +5,7 @@ import torch
 from targets.anchor_creator import AnchorCreator
 
 
-# Todo 对候选框区域的特征图为输入，预测目标框的类别概率和坐标
+# Fixed 对候选框区域的特征图为输入，预测目标框的类别概率和坐标
 class VGG16RoIHead(nn.Module):
     """
     目的是执行从不均匀大小到 固定大小的特征地图（feature maps） (例如 7×7)的输入的最大范围池。
@@ -65,7 +65,7 @@ class VGG16RoIHead(nn.Module):
         pool_resize = pool.view(pool.size(0), -1)
         fc7 = self.classifier(pool_resize)
         roi_cls_locs = self.cls_loc(fc7)
-        roi_scores = self.score(fc7)
+        roi_scores = self.score(fc7)  # Todo 如何定义损失 是否要softmax
         return roi_cls_locs, roi_scores
 
 

@@ -47,11 +47,10 @@ class AnchorTargetCreator(torch.nn.Module):
         anchor = anchor[inside_index]
         # 分配标签数组
         label, argmax_ious = self.create_label(inside_index, anchor, bbox)
-        # 为所有有效的anchor box分配anchor locs，而不考虑其标签
+        # 分配anchor locs，不考虑其标签
         loc = cvt_bbox_to_location(anchor, bbox[argmax_ious])
 
         # 用inside_index变量将他们映射到原始的anchors，无效的anchor box标签填充-1（忽略），位置填充0
-        #
         anchor_labels = to_device(torch.full((n_anchor,), -1, dtype=label.dtype))
         anchor_labels[inside_index] = label
 

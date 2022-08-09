@@ -5,8 +5,7 @@ from utils.to_tensor import to_device
 class AnchorCreator(object):
     def __init__(self):
         """
-        经过主干网络后特征图为50X50像素
-
+        用于生成特征图[50*50] 对应的 Anchors
         """
         pass
 

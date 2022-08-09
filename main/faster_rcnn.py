@@ -74,8 +74,4 @@ if __name__ == "__main__":
     f_rcnn = FasterRCNN()
 
     inputImage = torch.Tensor(1, 3, 800, 800).float()
-    # ps, pl, rc, rs = f_rcnn(inputImage)
-    # print(ps.shape)
-    # print(pl.shape)
-    # print(rc.shape)
-    # print(rs.shape)
+    print(f_rcnn)

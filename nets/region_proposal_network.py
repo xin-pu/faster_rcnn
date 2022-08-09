@@ -49,8 +49,7 @@ class RegionProposalNetwork(nn.Module):
             .contiguous()  # [B,50,50,9,2]
 
         objectness_score = pred_cls_scores.view(batch_size, height, width, -1, 2)[:, :, :, :, 1] \
-            .contiguous() \
-            .view(batch_size, -1)
+            .contiguous().view(batch_size, -1)
         pred_cls_scores = pred_cls_scores \
             .view(batch_size, -1, 2)
 

@@ -4,6 +4,7 @@ import torchvision.ops
 from utils.bbox_tools_torch import cvt_location_to_bbox
 from utils.to_tensor import cvt_tensor
 
+
 class ProposalCreator(object):
 
     def __init__(self,

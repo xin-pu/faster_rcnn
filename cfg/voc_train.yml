@@ -10,14 +10,16 @@ labels: [ "aeroplane",  "bicycle", "bird", "boat","bottle",
           "pottedplant", "sheep",   "sofa", "train", "tvmonitor" ]
 input_size: 800
 anchor_base_size: 16
-anchor_ratios: [0.5, 1, 2]
-anchor_scales: [8, 16, 32]
+anchor_ratios: [ 0.5, 1, 2 ]
+anchor_scales: [ 8, 16, 32 ]
 # enhance
 enhance: False
+loc_normalize_mean: [ 0., 0., 0., 0. ]
+loc_normalize_std: [ 0.1, 0.1, 0.2, 0.2 ]
 
 # training
 epoch: 100
-batch_size: 16
+batch_size: 24
 learning_rate: 0.001
 
 val_split: 0.1

@@ -25,6 +25,6 @@ if __name__ == "__main__":
     print(cvt_tensor(d))
 
     a = torch.asarray([[2, 0, 3, 8]]).float()
-    b = torch.asarray([3]).long()
+    b = torch.asarray([2]).long()
     loss = torch.nn.functional.cross_entropy(a, b)
     print(loss)

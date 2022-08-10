@@ -17,6 +17,8 @@ class TrainPlan(object):
         self.anchor_scales = cfg["anchor_scales"]
 
         self.enhance = cfg["enhance"]
+        self.loc_normalize_mean = cfg["loc_normalize_mean"]
+        self.loc_normalize_std = cfg["loc_normalize_std"]
 
         self.epoch = cfg["epoch"]
         self.batch_size = cfg["batch_size"]

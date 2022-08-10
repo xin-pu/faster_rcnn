@@ -94,7 +94,13 @@ class Train(object):
             print("\r\n")
 
     def get_model(self):
-        model = cvt_module(FasterRCNN())
+        feat_stride = self.train_plan.anchor_base_size
+        n_fg_class = len(self.train_plan.labels)
+        enhance = self.train_plan.enhance
+        loc_normalize_mean = self.train_plan.loc_normalize_mean if enhance else [0., 0., 0., 0.]
+        loc_normalize_std = self.train_plan.loc_normalize_std if enhance else [0., 0., 0., 0.]
+
+        model = cvt_module(FasterRCNN(feat_stride, n_fg_class, loc_normalize_mean, loc_normalize_std))
         pre_weights = self.train_plan.save_file
         weight_file = Path(pre_weights)
         if weight_file.exists():

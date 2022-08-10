@@ -82,8 +82,9 @@ class ProposalTargetCreator(object):
 
         # Compute offsets and scales to match sampled RoIs to the GTs.
         gt_roi_loc = cvt_bbox_to_location(sample_roi, bbox[gt_assignment[keep_index]])
-        gt_roi_loc = (gt_roi_loc - cvt_tensor(torch.asarray(loc_normalize_mean).float())) / \
-                     cvt_tensor(torch.asarray(loc_normalize_std).float())
+        # Why ? 增强样本？
+        # gt_roi_loc = (gt_roi_loc - cvt_tensor(torch.asarray(loc_normalize_mean).float())) / \
+        #              cvt_tensor(torch.asarray(loc_normalize_std).float())
 
         return sample_roi, gt_roi_loc, gt_roi_label
 

@@ -1,5 +1,4 @@
 import torch
-import torch as t
 from torch import nn
 
 from nets.backbone import get_feature_extractor_classifier

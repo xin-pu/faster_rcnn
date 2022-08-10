@@ -23,7 +23,7 @@ class Train(object):
 
         dataloader = self.get_dataloader()
         net = self.get_model()
-        loss_net = cvt_module(FinalLoss())
+        loss_net = cvt_module(FinalLoss(train_plan.rpn_sigma, train_plan.roi_sigma))
         optimizer = optim.NAdam(net.parameters(), lr=train_plan.learning_rate)
 
         anchor_creator = AnchorCreator()

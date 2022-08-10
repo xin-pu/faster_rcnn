@@ -48,6 +48,7 @@ class FinalLoss(torch.nn.Module):
         # ------------------ ROI losses (fast rcnn loss) -------------------#
         n_sample = roi_cls_loc.shape[0]
         roi_cls_loc = roi_cls_loc.view(n_sample, -1, 4)
+        # KeyPoint 只选取Label正确的Box计算损失更新前错误
         roi_loc = roi_cls_loc[cvt_tensor(torch.arange(0, n_sample)).long(), gt_roi_labels]
         roi_loc_loss = fast_rcnn_loc_loss(roi_loc, gt_roi_locs, gt_roi_labels, self.roi_sigma)
 

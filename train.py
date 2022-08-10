@@ -7,7 +7,7 @@ import time
 
 from cfg.plan_config import TrainPlan
 from dataset.dataset_generator import ImageDataSet
-from loss.final_loss import FinalLoss
+from loss.final_loss_v2 import FinalLoss
 from main.faster_rcnn import FasterRCNN
 from targets.anchor_creator import AnchorCreator
 from targets.anchor_target_creator import AnchorTargetCreator
@@ -46,8 +46,8 @@ class Train(object):
                 # get the inputs
                 inputs, labels_box = data
                 batch_size = inputs.shape[0]
-
-                labels = labels_box[..., 0:1]
+                # Fixed Labels convert to long before cal transfer
+                labels = labels_box[..., 0:1].long()
                 bboxes = labels_box[..., 1:]
 
                 bbox_count = len(torch.where(labels[..., -1] >= 0)[0])

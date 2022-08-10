@@ -41,17 +41,17 @@ class FasterRCNN(nn.Module):
         feature = self.feature_extractor(x)
 
         pred_scores, pred_locs, pred_rois, pred_roi_indices = self.rpn(feature, img_size, anchor, scale)
-
         sample_rois = []
         sample_roi_indices = []
         gt_roi_loc_array = []
         gt_roi_label_array = []
         for b in range(batch):
+            bbox_count = len(torch.where(labels[b, ..., -1] >= 0)[0])
             roi_indices = torch.where(pred_roi_indices == b)[0]
             sample_roi, gt_roi_loc, gt_roi_label = self.proposal_target_creator(
                 pred_rois[roi_indices],
-                bbox[b, ...],
-                labels[b, ...],
+                bbox[b, 0:bbox_count, ...],
+                labels[b, 0:bbox_count, ...],
                 self.loc_normalize_mean,
                 self.loc_normalize_std)
             sample_rois.append(sample_roi)

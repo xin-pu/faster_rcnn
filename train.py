@@ -24,7 +24,8 @@ class Train(object):
         dataloader = self.get_dataloader()
         net = self.get_model()
         loss_net = cvt_module(FinalLoss(train_plan.rpn_sigma, train_plan.roi_sigma))
-        optimizer = optim.NAdam(net.parameters(), lr=train_plan.learning_rate)
+        # KeyPoint 增加正则项，否则模型会输出NAN，
+        optimizer = optim.NAdam(net.parameters(), lr=train_plan.learning_rate, weight_decay=0.0005)
 
         anchor_creator = AnchorCreator()
         anchor_target_creator = AnchorTargetCreator()
@@ -50,10 +51,6 @@ class Train(object):
                 labels = labels_box[..., 0:1].long()
                 bboxes = labels_box[..., 1:]
 
-                bbox_count = len(torch.where(labels[..., -1] >= 0)[0])
-                labels = labels.permute(0, 2, 1)[..., 0:bbox_count].permute(0, 2, 1)
-                bboxes = bboxes.permute(0, 2, 1)[..., 0:bbox_count].permute(0, 2, 1)
-
                 optimizer.zero_grad()
 
                 # forward
@@ -62,7 +59,10 @@ class Train(object):
                 gt_rpn_loc_c = []
                 gt_rpn_label_c = []
                 for b in range(batch_size):
-                    gt_rpn_loc, gt_rpn_label = anchor_target_creator(anchor, bboxes[b], image_size)
+                    bbox_count = len(torch.where(labels[b, ..., -1] >= 0)[0])
+                    batch_bbox = bboxes[b, 0:bbox_count, ...]
+                    gt_rpn_loc, gt_rpn_label = anchor_target_creator(anchor, batch_bbox, image_size)
+
                     gt_rpn_loc_c.append(gt_rpn_loc.unsqueeze(0))
                     gt_rpn_label_c.append(gt_rpn_label.unsqueeze(0))
                 gt_rpn_label = torch.concat(gt_rpn_label_c, dim=0)
@@ -82,14 +82,17 @@ class Train(object):
                 optimizer.step()
 
                 e = i + 1
-                running_loss += loss.item()
+                current_loss = loss.item()
+                running_loss += current_loss
                 ave_loss = running_loss / e
                 per = 100.0 * e / data_batch_epoch
                 cost_time = time.time() - time_start
                 rest_time = (data_batch_epoch - e) * cost_time / e
 
-                print(end="\033\rEpoch: {:05d}\tBatch: {:05d}\tLoss: {:>.4f}\tPer:{:>.2f}%\tCost:{:.0f}s\tRest:{:.0f}s"
-                      .format(epoch + 1, i, ave_loss, per, cost_time, rest_time))
+                print(
+                    end="\033\rEpoch: {:05d}\tBatch: {:05d}\tB_Loss: {:>.4f}\tLoss: {:>.4f}\t"
+                        "Per:{:>.2f}%\tCost:{:.0f}s\tRest:{:.0f}s"
+                    .format(epoch + 1, i, current_loss, ave_loss, per, cost_time, rest_time))
             torch.save(net.state_dict(), self.train_plan.save_file)
             print("\r\n")
 
@@ -110,7 +113,7 @@ class Train(object):
 
     def get_dataloader(self):
         dataset = ImageDataSet(self.train_plan)
-        return DataLoader(dataset, batch_size=self.train_plan.batch_size, shuffle=True)
+        return DataLoader(dataset, batch_size=self.train_plan.batch_size, shuffle=False)
 
 
 my_plan = TrainPlan("cfg/voc_train.yml")

@@ -115,11 +115,18 @@ class AnchorTargetCreator(torch.nn.Module):
 if __name__ == "__main__":
     from targets.anchor_creator import AnchorCreator
 
-    test_bbox = cvt_tensor(torch.asarray([[20, 30, 400, 500], [300, 400, 500, 600]])).float()  # [y1, x1, y2, x2] format
-
+    test_bbox = cvt_tensor(torch.asarray([[78, 104, 183, 375],[88, 133, 123, 197]])).float()  # [y1, x1, y2, x2] format
+    test_bbox[..., [0, 2]] = test_bbox[..., [0, 2]] * 800 / 500.
+    test_bbox[..., [1, 3]] = test_bbox[..., [1, 3]] * 800 / 486.
+    print(test_bbox)
     ang_pattern = AnchorCreator()()
 
     anchor_target_creator = AnchorTargetCreator()
     locs, labs = anchor_target_creator(ang_pattern, test_bbox, (800, 800))
-    print(locs.shape)
-    print(labs.shape)
+    obj_index = torch.where(labs == 1)[0]
+
+    obj_ios = bbox_iou(test_bbox, ang_pattern[obj_index])
+    print(obj_ios)
+    back_index = torch.where(labs == 0)[0]
+    back_ios = bbox_iou(test_bbox, ang_pattern[back_index])
+    print(back_ios)

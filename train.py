@@ -103,7 +103,7 @@ class Train(object):
         model = cvt_module(FasterRCNN(feat_stride, n_fg_class, loc_normalize_mean, loc_normalize_std))
         pre_weights = self.train_plan.save_file
         weight_file = Path(pre_weights)
-        if weight_file.exists():
+        if self.train_plan.pre_train and weight_file.exists():
             model.load_state_dict(torch.load(pre_weights))
             print("load from {}".format(pre_weights))
         return model

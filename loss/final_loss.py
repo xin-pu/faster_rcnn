@@ -39,7 +39,8 @@ class FinalLoss(torch.nn.Module):
 
         x = torch.abs(gt_roi_locs - roi_loc)
         roi_loc_loss = ((x < 1).float() * 0.5 * x ** 2) + ((x >= 1).float() * (x - 0.5))
-        n_reg = roi_loc_loss.float().sum()  # ignore gt_label==-1 for rpn_loss
+        # Fixed bug
+        n_reg = (gt_roi_label >= 0).float().sum()
         roi_loc_loss = roi_loc_loss.sum() / n_reg
 
         return rpn_cls_loss + self.rpn_lambda * rpn_loc_loss + roi_cls_loss + self.roi_lambda * roi_loc_loss

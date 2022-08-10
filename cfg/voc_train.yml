@@ -2,7 +2,7 @@
 image_index_file: F:\PASCALVOC\VOC2012\myData_train.txt
 annot_encode_folder: F:\PASCALVOC\VOC2012\labels
 save_file: F:\SaveModels\FasterRCNN\voc.pth
-pre_train: True
+pre_train: False
 
 labels: [ "aeroplane",  "bicycle", "bird", "boat","bottle",
           "bus",    "car",  "cat",   "chair",   "cow",
@@ -19,7 +19,7 @@ loc_normalize_std: [ 0.1, 0.1, 0.2, 0.2 ]
 
 # training
 epoch: 100
-batch_size: 24
+batch_size: 16
 learning_rate: 0.001
 
 val_split: 0.1

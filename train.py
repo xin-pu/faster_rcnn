@@ -37,11 +37,11 @@ class Train(object):
         data_batch_epoch = dataloader.__len__()
         epoch = train_plan.epoch
         image_size = (train_plan.input_size, train_plan.input_size)
-
+        loss_list = []
         for epoch in range(epoch):  # loop over the dataset multiple times
             time_start = time.time()
             running_loss = 0.0
-
+            ave_loss = 0
             for i, data in enumerate(dataloader, 0):
 
                 # get the inputs
@@ -93,7 +93,12 @@ class Train(object):
                     end="\033\rEpoch: {:05d}\tBatch: {:05d}\tB_Loss: {:>.4f}\tLoss: {:>.4f}\t"
                         "Per:{:>.2f}%\tCost:{:.0f}s\tRest:{:.0f}s"
                     .format(epoch + 1, i, current_loss, ave_loss, per, cost_time, rest_time))
-            torch.save(net.state_dict(), self.train_plan.save_file)
+
+            if len(loss_list) > 0:
+                if ave_loss < min(loss_list):
+                    torch.save(net.state_dict(), self.train_plan.save_file)
+                    print("\r\nloss: {} <= {}  save weights.".format(ave_loss, min(loss_list)))
+            loss_list.append(ave_loss)
             print("\r\n")
 
     def predict(self, image):
@@ -150,6 +155,6 @@ class Train(object):
 # Keypoint 正向传播异常侦测
 # torch.autograd.set_detect_anomaly(True)
 
-my_plan = TrainPlan("cfg/voc_train.yml")
+my_plan = TrainPlan("cfg/raccoon_train.yml")
 trainer = Train(my_plan)
 trainer.__call__()

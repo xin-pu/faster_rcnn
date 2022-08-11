@@ -80,7 +80,7 @@ class ImageDataSet(Dataset):
 
 if __name__ == "__main__":
 
-    trainPlan = TrainPlan("../cfg/voc_train.yml")
+    trainPlan = TrainPlan("../cfg/raccoon_train.yml")
     print(trainPlan)
     dataset = ImageDataSet(trainPlan)
     dataloader = DataLoader(dataset, batch_size=64, shuffle=False)

@@ -1,7 +1,7 @@
 # data
-image_index_file: F:\PASCALVOC\VOC2012\myData_train.txt
-annot_encode_folder: F:\PASCALVOC\VOC2012\labels
-save_file: F:\SaveModels\FasterRCNN\voc.pth
+image_index_file: F:\Raccoon\train.txt
+annot_encode_folder: F:\Raccoon\labels
+save_file: F:\SaveModels\FasterRCNN\raccoon.pth
 pre_train: False
 
 labels: [ "aeroplane",  "bicycle", "bird", "boat","bottle",
@@ -20,7 +20,7 @@ loc_normalize_std: [ 0.1, 0.1, 0.2, 0.2 ]
 # training
 epoch: 100
 batch_size: 4
-learning_rate: 0.0001
+learning_rate: 0.001
 
 val_split: 0.1
 

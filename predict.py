@@ -2,6 +2,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+import pandas as pd
 import torch
 from torch.nn import functional as F
 from torchvision.ops import nms
@@ -9,6 +10,7 @@ from torchvision.ops import nms
 from cfg.plan_config import TrainPlan
 from main.faster_rcnn import FasterRCNN
 from targets.anchor_creator import AnchorCreator
+from utils.bbox_tools_numpy import bbox_iou
 from utils.to_tensor import cvt_module
 from utils.bbox_tools_torch import cvt_location_to_bbox
 
@@ -52,17 +54,26 @@ class Predict(object):
 def get_image(image_file):
     image = cv2.imread(image_file, cv2.IMREAD_COLOR)
     height, width, _ = image.shape
+    scale_height, scale_width = height / 800., width / 800.
+
     image = cv2.resize(image, (800, 800))
     image = image / 255.
     image = image.transpose(2, 0, 1)
     image = torch.asarray(image).float()
-    return image.cuda()
+    return image.cuda(), (scale_height, scale_width)
 
 
-test_image = get_image(r"F:\PASCALVOC\VOC2012\JPEGImages\2007_000032.jpg")
+image_id = r"raccoon-196"
+image_file = r"F:\Raccoon\images\{0}.jpg".format(image_id)
+test_image, scale = get_image(image_file)
 test_image = test_image.unsqueeze(0)
 
-my_plan = TrainPlan("cfg/voc_train.yml")
+annot_file = r"F:\Raccoon\labels\{0}.txt".format(image_id)
+data = pd.read_csv(annot_file, sep=' ', header=None).iloc[:, :].values
+d = np.asarray(data[..., [0, 3, 1, 4, 2]])[..., 1:]
+print(d)
+
+my_plan = TrainPlan("cfg/raccoon_train.yml")
 trainer = Predict(my_plan)
 
 roi_cls_loc, roi_scores, roi = trainer(test_image)
@@ -88,15 +99,32 @@ for la in range(1, 21):
     mask = prob_l > 0.7
     cls_bbox_l = cls_bbox_l[mask]
     prob_l = prob_l[mask]
-
-    bbox.append(cls_bbox_l.detach().cpu().numpy())
-    label.append((la - 1) * np.ones((prob_l.shape[0],)))
-    score.append(prob_l.detach().cpu().numpy())
+    keep = nms(cls_bbox_l, prob_l, 0.3)
+    bbox.append(cls_bbox_l[keep].detach().cpu().numpy())
+    label.append((la - 1) * np.ones((len(keep),)))
+    score.append(prob_l[keep].detach().cpu().numpy())
 
 bbox = np.concatenate(bbox, axis=0).astype(np.float32)
 label = np.concatenate(label, axis=0).astype(np.int32)
 score = np.concatenate(score, axis=0).astype(np.float32)
 
-print(bbox.shape)
-print(label.shape)
-print(score.shape)
+bbox[..., 0] = bbox[..., 0] * scale[0]
+bbox[..., 1] = bbox[..., 1] * scale[1]
+bbox[..., 2] = bbox[..., 2] * scale[0]
+bbox[..., 3] = bbox[..., 3] * scale[1]
+bbox = bbox[..., [1, 0, 3, 2]]
+
+image = cv2.imread(image_file)
+for box in bbox:
+    min_max = box
+    pt1 = (int(min_max[0]), int(min_max[1]))
+    pt2 = (int(min_max[2]), int(min_max[3]))
+    cv2.rectangle(image, pt1, pt2, (255, 255, 0), 1)
+    class_name = ""
+
+    cv2.putText(image, "{0} {1:.2f}%".format(class_name, 0 * 100), pt1, cv2.FONT_ITALIC, 1,
+                (0, 0, 255), 1,
+                lineType=cv2.LINE_AA)
+
+cv2.imshow("Result", image)
+cv2.waitKey(5000)

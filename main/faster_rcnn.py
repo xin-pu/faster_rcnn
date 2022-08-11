@@ -77,7 +77,7 @@ class FasterRCNN(nn.Module):
         feature = self.feature_extractor(x)
         pred_scores, pred_locs, pred_rois, pred_roi_indices = self.rpn(feature, img_size, anchor, scale)
         roi_cls_locs, roi_scores = self.head(feature, pred_rois, pred_roi_indices)
-        return pred_scores, pred_locs, roi_cls_locs, roi_scores
+        return roi_cls_locs, roi_scores, pred_rois, pred_roi_indices
 
 
 if __name__ == "__main__":

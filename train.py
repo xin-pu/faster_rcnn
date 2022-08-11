@@ -107,6 +107,7 @@ class Train(object):
 
         net = self.get_model(False)
         pred_scores, pred_locs, roi_cls_locs, roi_scores = net.predict(image, anchor)
+        return roi_cls_locs, roi_scores
 
     def get_model(self, train=True):
         feat_stride = self.train_plan.anchor_base_size

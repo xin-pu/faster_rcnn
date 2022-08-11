@@ -2,6 +2,7 @@ from torch import nn
 from torch.nn import functional as f
 
 from targets.proposal_creator import ProposalCreator
+from utils.to_tensor import cvt_tensor
 import torch
 
 
@@ -62,7 +63,7 @@ class RegionProposalNetwork(nn.Module):
             roi = self.proposal_layer(pred_locations[i],
                                       objectness_score[i],
                                       anchor, image_size, scale)
-            batch_index = i * torch.ones((len(roi),)).long()
+            batch_index = cvt_tensor(i * torch.ones((len(roi),))).long()
             rois.append(roi)
             roi_indices.append(batch_index)
 

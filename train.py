@@ -76,7 +76,7 @@ class Train(object):
                                 gt_rpn_loc.view(-1, 4),
                                 gt_roi_labels.view(-1),
                                 gt_roi_locs)
-
+                # Keypoint 反向传播异常侦测
                 loss.backward()
 
                 optimizer.step()
@@ -115,6 +115,9 @@ class Train(object):
         dataset = ImageDataSet(self.train_plan)
         return DataLoader(dataset, batch_size=self.train_plan.batch_size, shuffle=False)
 
+
+# Keypoint 正向传播异常侦测
+# torch.autograd.set_detect_anomaly(True)
 
 my_plan = TrainPlan("cfg/voc_train.yml")
 trainer = Train(my_plan)

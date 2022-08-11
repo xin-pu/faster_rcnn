@@ -24,8 +24,8 @@ class Train(object):
         dataloader = self.get_dataloader()
         net = self.get_model()
         loss_net = cvt_module(FinalLoss(train_plan.rpn_sigma, train_plan.roi_sigma))
-        # KeyPoint 增加正则项，否则模型会输出NAN，
-        optimizer = optim.NAdam(net.parameters(), lr=train_plan.learning_rate, weight_decay=0.0005)
+
+        optimizer = self.get_optimizer(net)
 
         anchor_creator = AnchorCreator()
         anchor_target_creator = AnchorTargetCreator()
@@ -96,14 +96,31 @@ class Train(object):
             torch.save(net.state_dict(), self.train_plan.save_file)
             print("\r\n")
 
-    def get_model(self):
+    def predict(self, image):
+        train_plan = self.train_plan
+        anchor_creator = AnchorCreator()
+
+        anchor = anchor_creator(train_plan.anchor_base_size,
+                                train_plan.anchor_ratios,
+                                train_plan.anchor_scales,
+                                train_plan.input_size)
+
+        net = self.get_model(False)
+        pred_scores, pred_locs, roi_cls_locs, roi_scores = net.predict(image, anchor)
+
+    def get_model(self, train=True):
         feat_stride = self.train_plan.anchor_base_size
         n_fg_class = len(self.train_plan.labels)
         enhance = self.train_plan.enhance
         loc_normalize_mean = self.train_plan.loc_normalize_mean if enhance else [0., 0., 0., 0.]
         loc_normalize_std = self.train_plan.loc_normalize_std if enhance else [0., 0., 0., 0.]
 
-        model = cvt_module(FasterRCNN(feat_stride, n_fg_class, loc_normalize_mean, loc_normalize_std))
+        if train:
+            model = cvt_module(FasterRCNN(feat_stride, n_fg_class, loc_normalize_mean, loc_normalize_std,
+                                          pre_train=self.train_plan.pre_train))
+        else:
+            model = cvt_module(FasterRCNN(feat_stride, n_fg_class, loc_normalize_mean, loc_normalize_std,
+                                          pre_train=True))
         pre_weights = self.train_plan.save_file
         weight_file = Path(pre_weights)
         if self.train_plan.pre_train and weight_file.exists():
@@ -111,9 +128,22 @@ class Train(object):
             print("load from {}".format(pre_weights))
         return model
 
+    def get_optimizer(self, model):
+        weight_decay = 0.0005
+        lr = self.train_plan.learning_rate
+        params = []
+        for key, value in dict(model.named_parameters()).items():
+            if value.requires_grad:
+                if 'bias' in key:
+                    params += [{'params': [value], 'lr': lr * 2, 'weight_decay': 0}]
+                else:
+                    # KeyPoint 增加正则项，否则模型会输出NAN，
+                    params += [{'params': [value], 'lr': lr, 'weight_decay': weight_decay}]
+        return optim.NAdam(params)
+
     def get_dataloader(self):
         dataset = ImageDataSet(self.train_plan)
-        return DataLoader(dataset, batch_size=self.train_plan.batch_size, shuffle=False)
+        return DataLoader(dataset, batch_size=self.train_plan.batch_size, shuffle=True)
 
 
 # Keypoint 正向传播异常侦测

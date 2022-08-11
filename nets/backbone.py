@@ -5,7 +5,7 @@ from torchvision.models import vgg16, VGG16_Weights
 from utils.to_tensor import cvt_tensor
 
 
-def get_feature_extractor_classifier():
+def get_feature_extractor_classifier(pre_train=False):
     """
     返回VGG16的特征提取层 和 分类层 用于
     特征提取层用于构建猪肝网络
@@ -13,7 +13,7 @@ def get_feature_extractor_classifier():
     :return:
     """
     # the 30th layer of features is relu of conv5_3
-    model = vgg16(weights=VGG16_Weights.IMAGENET1K_V1)
+    model = vgg16(weights=VGG16_Weights.IMAGENET1K_V1) if not pre_train else vgg16()
 
     # noinspection PyTypeChecker
     feature_lay = list(model.features)[:30]

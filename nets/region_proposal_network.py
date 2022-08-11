@@ -16,7 +16,8 @@ class RegionProposalNetwork(nn.Module):
                  in_channels=512,
                  mid_channels=512,
                  feat_stride=16,
-                 base_anchor_length=9):
+                 base_anchor_length=9,
+                 pre_train=False):
         super(RegionProposalNetwork, self).__init__()
 
         self.feat_stride = feat_stride
@@ -27,12 +28,13 @@ class RegionProposalNetwork(nn.Module):
         self.proposal_layer = ProposalCreator()
 
         # 初始化各层参数
-        for m in self.modules():
-            if isinstance(m, (nn.Conv2d, nn.Linear)):
-                nn.init.normal_(m.weight, 0, 0.01)
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-                nn.init.normal_(m.weight, 0, 0.01)
-                nn.init.constant_(m.bias, 0)
+        if not pre_train:
+            for m in self.modules():
+                if isinstance(m, (nn.Conv2d, nn.Linear)):
+                    nn.init.normal_(m.weight, 0, 0.01)
+                elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                    nn.init.normal_(m.weight, 0, 0.01)
+                    nn.init.constant_(m.bias, 0)
 
     def forward(self, x, image_size, anchor, scale=1.):
 

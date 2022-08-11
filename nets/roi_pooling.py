@@ -24,7 +24,8 @@ class VGG16RoIHead(nn.Module):
                  classifier,
                  n_class,
                  roi_size,
-                 spatial_scale):
+                 spatial_scale,
+                 pre_train):
         """
 
         :param classifier: 从VGG16中获取的线性层
@@ -44,12 +45,13 @@ class VGG16RoIHead(nn.Module):
         self.cls_loc = nn.Linear(4096, n_class * 4)
         self.score = nn.Linear(4096, n_class)
 
-        for m in self.modules():
-            if isinstance(m, (nn.Conv2d, nn.Linear)):
-                nn.init.normal_(m.weight, 0, 0.01)
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-                nn.init.normal_(m.weight, 0, 0.01)
-                nn.init.constant_(m.bias, 0)
+        if not pre_train:
+            for m in self.modules():
+                if isinstance(m, (nn.Conv2d, nn.Linear)):
+                    nn.init.normal_(m.weight, 0, 0.01)
+                elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                    nn.init.normal_(m.weight, 0, 0.01)
+                    nn.init.constant_(m.bias, 0)
 
     def forward(self, x, rois, roi_indices):
 

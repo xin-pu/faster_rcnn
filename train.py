@@ -28,7 +28,7 @@ class Train(object):
         optimizer = self.get_optimizer(net)
 
         anchor_creator = AnchorCreator()
-        anchor_target_creator = AnchorTargetCreator()
+        anchor_target_creator = AnchorTargetCreator(n_sample=128)
 
         anchor = anchor_creator(train_plan.anchor_base_size,
                                 train_plan.anchor_ratios,
@@ -101,7 +101,7 @@ class Train(object):
                 print(
                     end="\033\rEpoch: {:05d}\tBatch: {:05d}\tLoss: {:>.4f}\t"
                         "Per:{:>.2f}%\tCost:{:.0f}s\tRest:{:.0f}s\t loss {:>.4f} {:>.4f} {:>.4f} {:>.4f}"
-                    .format(epoch + 1, i, ave_loss, per, cost_time, rest_time,
+                    .format(epoch + 1, i + 1, ave_loss, per, cost_time, rest_time,
                             sum(l1_loss) / (i + 1),
                             sum(l2_loss) / (i + 1),
                             sum(l3_loss) / (i + 1),
@@ -160,7 +160,7 @@ class Train(object):
                 else:
                     # KeyPoint 增加正则项，否则模型会输出NAN，
                     params += [{'params': [value], 'lr': lr, 'weight_decay': weight_decay}]
-        return optim.Adam(params)
+        return optim.NAdam(params)
 
     def get_dataloader(self):
         dataset = ImageDataSet(self.train_plan)

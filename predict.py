@@ -10,7 +10,6 @@ from torchvision.ops import nms
 from cfg.plan_config import TrainPlan
 from main.faster_rcnn import FasterRCNN
 from targets.anchor_creator import AnchorCreator
-from utils.bbox_tools_numpy import bbox_iou
 from utils.to_tensor import cvt_module
 from utils.bbox_tools_torch import cvt_location_to_bbox
 
@@ -45,9 +44,11 @@ class Predict(object):
 
         pre_weights = self.train_plan.save_file
         weight_file = Path(pre_weights)
-        if self.train_plan.pre_train and weight_file.exists():
-            model.load_state_dict(torch.load(pre_weights))
-            print("load from {}".format(pre_weights))
+        if not weight_file.exists():
+            raise Exception()
+
+        model.load_state_dict(torch.load(pre_weights))
+        print("load from {}".format(pre_weights))
         return model
 
 
@@ -63,28 +64,23 @@ def get_image(image_file):
     return image.cuda(), (scale_height, scale_width)
 
 
-image_id = r"raccoon-196"
-image_file = r"F:\Raccoon\images\{0}.jpg".format(image_id)
+image_file = r"E:\OneDrive - II-VI Incorporated\Pictures\Saved Pictures\test3.jpg"
 test_image, scale = get_image(image_file)
 test_image = test_image.unsqueeze(0)
 
-annot_file = r"F:\Raccoon\labels\{0}.txt".format(image_id)
-data = pd.read_csv(annot_file, sep=' ', header=None).iloc[:, :].values
-d = np.asarray(data[..., [0, 3, 1, 4, 2]])[..., 1:]
-print(d)
-
 my_plan = TrainPlan("cfg/raccoon_train.yml")
+n_class = len(my_plan.labels) + 1
 trainer = Predict(my_plan)
 
 roi_cls_loc, roi_scores, roi = trainer(test_image)
 roi_score = roi_scores.data
 roi_cls_loc = roi_cls_loc.data
 
-roi_cls_loc = roi_cls_loc.view(-1, 21, 4)
+roi_cls_loc = roi_cls_loc.view(-1, n_class, 4)
 roi = roi.view(-1, 1, 4).expand_as(roi_cls_loc)
 
 cls_bbox = cvt_location_to_bbox(roi_cls_loc, roi)
-cls_bbox = cls_bbox.view(-1, 21 * 4)
+cls_bbox = cls_bbox.view(-1, 2 * 4)
 cls_bbox[:, 0::2] = (cls_bbox[:, 0::2]).clamp(min=0, max=800)
 cls_bbox[:, 1::2] = (cls_bbox[:, 1::2]).clamp(min=0, max=800)
 
@@ -93,8 +89,8 @@ prob = F.softmax(roi_scores, dim=-1)
 bbox = list()
 label = list()
 score = list()
-for la in range(1, 21):
-    cls_bbox_l = cls_bbox.reshape((-1, 21, 4))[:, la, :]
+for la in range(1, n_class):
+    cls_bbox_l = cls_bbox.reshape((-1, n_class, 4))[:, la, :]
     prob_l = prob[:, la]
     mask = prob_l > 0.7
     cls_bbox_l = cls_bbox_l[mask]
@@ -107,24 +103,24 @@ for la in range(1, 21):
 bbox = np.concatenate(bbox, axis=0).astype(np.float32)
 label = np.concatenate(label, axis=0).astype(np.int32)
 score = np.concatenate(score, axis=0).astype(np.float32)
-
+print(score)
 bbox[..., 0] = bbox[..., 0] * scale[0]
 bbox[..., 1] = bbox[..., 1] * scale[1]
 bbox[..., 2] = bbox[..., 2] * scale[0]
 bbox[..., 3] = bbox[..., 3] * scale[1]
 bbox = bbox[..., [1, 0, 3, 2]]
 
-image = cv2.imread(image_file)
+image_s = cv2.imread(image_file)
 for box in bbox:
     min_max = box
     pt1 = (int(min_max[0]), int(min_max[1]))
     pt2 = (int(min_max[2]), int(min_max[3]))
-    cv2.rectangle(image, pt1, pt2, (255, 255, 0), 1)
+    cv2.rectangle(image_s, pt1, pt2, (255, 255, 0), 1)
     class_name = ""
 
-    cv2.putText(image, "{0} {1:.2f}%".format(class_name, 0 * 100), pt1, cv2.FONT_ITALIC, 1,
+    cv2.putText(image_s, "{0} {1:.2f}%".format(class_name, 0 * 100), pt1, cv2.FONT_ITALIC, 1,
                 (0, 0, 255), 1,
                 lineType=cv2.LINE_AA)
 
-cv2.imshow("Result", image)
+cv2.imshow("Result", image_s)
 cv2.waitKey(5000)

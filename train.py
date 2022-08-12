@@ -38,10 +38,13 @@ class Train(object):
         epoch = train_plan.epoch
         image_size = (train_plan.input_size, train_plan.input_size)
         loss_list = []
+
         for epoch in range(epoch):  # loop over the dataset multiple times
             time_start = time.time()
             running_loss = 0.0
             ave_loss = 0
+            l1_loss, l2_loss, l3_loss, l4_loss = [], [], [], []
+
             for i, data in enumerate(dataloader, 0):
 
                 # get the inputs
@@ -76,28 +79,40 @@ class Train(object):
                                 gt_rpn_loc.view(-1, 4),
                                 gt_roi_labels.view(-1),
                                 gt_roi_locs)
+
+                sum_loss = sum(loss)
                 # Keypoint 反向传播异常侦测
-                loss.backward()
+                sum_loss.backward()
 
                 optimizer.step()
 
                 e = i + 1
-                current_loss = loss.item()
+                current_loss = sum_loss.item()
                 running_loss += current_loss
                 ave_loss = running_loss / e
                 per = 100.0 * e / data_batch_epoch
                 cost_time = time.time() - time_start
                 rest_time = (data_batch_epoch - e) * cost_time / e
 
+                l1_loss.append(loss[0].item())
+                l2_loss.append(loss[1].item())
+                l3_loss.append(loss[2].item())
+                l4_loss.append(loss[3].item())
                 print(
-                    end="\033\rEpoch: {:05d}\tBatch: {:05d}\tB_Loss: {:>.4f}\tLoss: {:>.4f}\t"
-                        "Per:{:>.2f}%\tCost:{:.0f}s\tRest:{:.0f}s"
-                    .format(epoch + 1, i, current_loss, ave_loss, per, cost_time, rest_time))
-
+                    end="\033\rEpoch: {:05d}\tBatch: {:05d}\tLoss: {:>.4f}\t"
+                        "Per:{:>.2f}%\tCost:{:.0f}s\tRest:{:.0f}s\t loss {:>.4f} {:>.4f} {:>.4f} {:>.4f}"
+                    .format(epoch + 1, i, ave_loss, per, cost_time, rest_time,
+                            sum(l1_loss) / (i + 1),
+                            sum(l2_loss) / (i + 1),
+                            sum(l3_loss) / (i + 1),
+                            sum(l4_loss) / (i + 1)))
+            if len(loss_list) == 0:
+                torch.save(net.state_dict(), self.train_plan.save_file)
+                print("\t save weights.")
             if len(loss_list) > 0:
                 if ave_loss < min(loss_list):
                     torch.save(net.state_dict(), self.train_plan.save_file)
-                    print("\r\nloss: {} <= {}  save weights.".format(ave_loss, min(loss_list)))
+                    print("\tloss: {:.4f} <= {:.4f}  save weights.".format(ave_loss, min(loss_list)))
             loss_list.append(ave_loss)
             print("\r\n")
 
@@ -145,7 +160,7 @@ class Train(object):
                 else:
                     # KeyPoint 增加正则项，否则模型会输出NAN，
                     params += [{'params': [value], 'lr': lr, 'weight_decay': weight_decay}]
-        return optim.NAdam(params)
+        return optim.Adam(params)
 
     def get_dataloader(self):
         dataset = ImageDataSet(self.train_plan)

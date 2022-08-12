@@ -40,28 +40,27 @@ class RegionProposalNetwork(nn.Module):
     def forward(self, x, image_size, anchor, scale=1.):
 
         batch_size, _, height, width = x.shape
+        n_anchor = anchor.shape[0] // (height * height)
+
         x_relu = f.relu(self.conv(x))
-        pred_cls_scores = torch.sigmoid(self.confidence_classify_layer(x_relu))  # [B,50*50*9,2]
-        pred_locations = self.location_regression_layer(x_relu)  # [B,50,50*9,4]
 
-        pred_locations = pred_locations.permute(0, 2, 3, 1) \
-            .contiguous() \
-            .view(batch_size, -1, 4)  # [B,50*50*9,4]
+        rpn_locs = self.location_regression_layer(x_relu)  # [B,50,50*9,4]
+        rpn_locs = rpn_locs.permute(0, 2, 3, 1).contiguous().view(batch_size, -1, 4)  # [B,50*50*9,4]
 
-        pred_cls_scores = pred_cls_scores.permute(0, 2, 3, 1) \
-            .contiguous()  # [B,50,50,9,2]
+        rpn_scores = self.confidence_classify_layer(x_relu)
+        rpn_scores = rpn_scores.permute(0, 2, 3, 1).contiguous()
+        rpn_softmax_scores = torch.softmax(rpn_scores.view(batch_size, height, width, n_anchor, 2), dim=-1)
 
-        objectness_score = pred_cls_scores.view(batch_size, height, width, -1, 2)[:, :, :, :, 1] \
-            .contiguous().view(batch_size, -1)
-        pred_cls_scores = pred_cls_scores \
-            .view(batch_size, -1, 2)
+        rpn_fg_scores = rpn_softmax_scores[:, :, :, :, 1].contiguous()  # [B,50,50,9,2]
+        rpn_fg_scores = rpn_fg_scores.view(batch_size, -1)
+        rpn_scores = rpn_scores.view(batch_size, -1, 2)
 
         rois = list()
         roi_indices = list()
         for i in range(batch_size):
             # 根据预测的结果生成 ROIS
-            roi = self.proposal_layer(pred_locations[i],
-                                      objectness_score[i],
+            roi = self.proposal_layer(rpn_locs[i],
+                                      rpn_fg_scores[i],
                                       anchor, image_size, scale)
             batch_index = cvt_tensor(i * torch.ones((len(roi),))).long()
             rois.append(roi)
@@ -69,7 +68,7 @@ class RegionProposalNetwork(nn.Module):
 
         rois = torch.concat(rois, dim=0)
         roi_indices = torch.concat(roi_indices, dim=0)
-        return pred_cls_scores, pred_locations, rois, roi_indices
+        return rpn_scores, rpn_locs, rois, roi_indices
 
 
 if __name__ == "__main__":

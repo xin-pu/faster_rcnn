@@ -4,10 +4,7 @@ annot_encode_folder: F:\Raccoon\labels
 save_file: F:\SaveModels\FasterRCNN\raccoon.pth
 pre_train: False
 
-labels: [ "aeroplane",  "bicycle", "bird", "boat","bottle",
-          "bus",    "car",  "cat",   "chair",   "cow",
-          "diningtable",  "dog",  "horse",  "motorbike",  "person",
-          "pottedplant", "sheep",   "sofa", "train", "tvmonitor" ]
+labels: [ "raccoon"]
 input_size: 800
 anchor_base_size: 16
 anchor_ratios: [ 0.5, 1, 2 ]
@@ -19,8 +16,8 @@ loc_normalize_std: [ 0.1, 0.1, 0.2, 0.2 ]
 
 # training
 epoch: 100
-batch_size: 4
-learning_rate: 0.001
+batch_size: 8
+learning_rate: 0.0001
 
 val_split: 0.1
 

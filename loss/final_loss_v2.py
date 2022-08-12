@@ -53,4 +53,4 @@ class FinalLoss(torch.nn.Module):
 
         roi_cls_loss = nn.CrossEntropyLoss()(roi_cls_score, gt_roi_labels)
 
-        return sum([rpn_loc_loss, rpn_cls_loss, roi_loc_loss, roi_cls_loss])
+        return [rpn_loc_loss, rpn_cls_loss, roi_loc_loss, roi_cls_loss]

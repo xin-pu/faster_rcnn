@@ -28,7 +28,7 @@ class Train(object):
         optimizer = self.get_optimizer(net)
 
         anchor_creator = AnchorCreator()
-        anchor_target_creator = AnchorTargetCreator(n_sample=128)
+        anchor_target_creator = AnchorTargetCreator(n_sample=256)
 
         anchor = anchor_creator(train_plan.anchor_base_size,
                                 train_plan.anchor_ratios,
@@ -43,7 +43,6 @@ class Train(object):
             time_start = time.time()
             running_loss = 0.0
             ave_loss = 0
-            l1_loss, l2_loss, l3_loss, l4_loss = [], [], [], []
 
             for i, data in enumerate(dataloader, 0):
 
@@ -94,18 +93,14 @@ class Train(object):
                 cost_time = time.time() - time_start
                 rest_time = (data_batch_epoch - e) * cost_time / e
 
-                l1_loss.append(loss[0].item())
-                l2_loss.append(loss[1].item())
-                l3_loss.append(loss[2].item())
-                l4_loss.append(loss[3].item())
                 print(
                     end="\033\rEpoch: {:05d}\tBatch: {:05d}\tLoss: {:>.4f}\t"
                         "Per:{:>.2f}%\tCost:{:.0f}s\tRest:{:.0f}s\t loss {:>.4f} {:>.4f} {:>.4f} {:>.4f}"
                     .format(epoch + 1, i + 1, ave_loss, per, cost_time, rest_time,
-                            sum(l1_loss) / (i + 1),
-                            sum(l2_loss) / (i + 1),
-                            sum(l3_loss) / (i + 1),
-                            sum(l4_loss) / (i + 1)))
+                            loss[0].item(),
+                            loss[1].item(),
+                            loss[2].item(),
+                            loss[3].item()))
             if len(loss_list) == 0:
                 torch.save(net.state_dict(), self.train_plan.save_file)
                 print("\t save weights.")
@@ -160,7 +155,7 @@ class Train(object):
                 else:
                     # KeyPoint 增加正则项，否则模型会输出NAN，
                     params += [{'params': [value], 'lr': lr, 'weight_decay': weight_decay}]
-        return optim.NAdam(params)
+        return optim.Adam(params)
 
     def get_dataloader(self):
         dataset = ImageDataSet(self.train_plan)
@@ -170,6 +165,6 @@ class Train(object):
 # Keypoint 正向传播异常侦测
 # torch.autograd.set_detect_anomaly(True)
 
-my_plan = TrainPlan("cfg/raccoon_train.yml")
+my_plan = TrainPlan("cfg/voc_train.yml")
 trainer = Train(my_plan)
 trainer.__call__()

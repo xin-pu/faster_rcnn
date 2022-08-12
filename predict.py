@@ -64,11 +64,11 @@ def get_image(image_file):
     return image.cuda(), (scale_height, scale_width)
 
 
-image_file = r"E:\OneDrive - II-VI Incorporated\Pictures\Saved Pictures\test3.jpg"
+image_file = r"E:\OneDrive - II-VI Incorporated\Pictures\Saved Pictures\cars.jpg"
 test_image, scale = get_image(image_file)
 test_image = test_image.unsqueeze(0)
 
-my_plan = TrainPlan("cfg/raccoon_train.yml")
+my_plan = TrainPlan("cfg/voc_train.yml")
 n_class = len(my_plan.labels) + 1
 trainer = Predict(my_plan)
 
@@ -80,7 +80,7 @@ roi_cls_loc = roi_cls_loc.view(-1, n_class, 4)
 roi = roi.view(-1, 1, 4).expand_as(roi_cls_loc)
 
 cls_bbox = cvt_location_to_bbox(roi_cls_loc, roi)
-cls_bbox = cls_bbox.view(-1, 2 * 4)
+cls_bbox = cls_bbox.view(-1, n_class * 4)
 cls_bbox[:, 0::2] = (cls_bbox[:, 0::2]).clamp(min=0, max=800)
 cls_bbox[:, 1::2] = (cls_bbox[:, 1::2]).clamp(min=0, max=800)
 
@@ -111,16 +111,20 @@ bbox[..., 3] = bbox[..., 3] * scale[1]
 bbox = bbox[..., [1, 0, 3, 2]]
 
 image_s = cv2.imread(image_file)
+
+i = 0
 for box in bbox:
     min_max = box
     pt1 = (int(min_max[0]), int(min_max[1]))
     pt2 = (int(min_max[2]), int(min_max[3]))
     cv2.rectangle(image_s, pt1, pt2, (255, 255, 0), 1)
-    class_name = ""
+    class_name = my_plan.labels[label[i]]
+    prob = score[i]
 
-    cv2.putText(image_s, "{0} {1:.2f}%".format(class_name, 0 * 100), pt1, cv2.FONT_ITALIC, 1,
+    cv2.putText(image_s, "{0} {1:.2f}%".format(class_name, prob * 100), pt1, cv2.FONT_ITALIC, 1,
                 (0, 0, 255), 1,
                 lineType=cv2.LINE_AA)
+    i += 1
 
 cv2.imshow("Result", image_s)
 cv2.waitKey(5000)

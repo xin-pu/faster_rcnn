@@ -47,3 +47,9 @@ print(features.shape)
    - 经过反复尝试，大致是因为学习率过大不匹配，导致梯度爆炸
    - 同时修复   只选取Label正确的Box计算ROI loc 损失
    - 同时修复   直传递对应的Box到anchor target creator 和 proposal target creator
+
+### Train
+![img.png](documents/train_log.png)
+
+### Predict
+![img.png](documents/predict.png)

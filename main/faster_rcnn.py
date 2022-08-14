@@ -36,7 +36,7 @@ class FasterRCNN(nn.Module):
                                  classifier=classifier,
                                  pre_train=self.pre_train)
 
-        self.proposal_target_creator = ProposalTargetCreator()
+        self.proposal_target_creator = ProposalTargetCreator(pos_ratio=0.4)
 
     def forward(self, x, labels, bbox, anchor, scale=1.):
         img_size = x.shape[2:]

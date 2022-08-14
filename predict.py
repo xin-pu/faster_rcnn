@@ -92,7 +92,7 @@ score = list()
 for la in range(1, n_class):
     cls_bbox_l = cls_bbox.reshape((-1, n_class, 4))[:, la, :]
     prob_l = prob[:, la]
-    mask = prob_l > 0.7
+    mask = prob_l > 0.8
     cls_bbox_l = cls_bbox_l[mask]
     prob_l = prob_l[mask]
     keep = nms(cls_bbox_l, prob_l, 0.3)
@@ -127,4 +127,5 @@ for box in bbox:
     i += 1
 
 cv2.imshow("Result", image_s)
-cv2.waitKey(5000)
+cv2.waitKey(20000)
+

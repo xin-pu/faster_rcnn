@@ -43,7 +43,7 @@ class Train(object):
             time_start = time.time()
             running_loss = 0.0
             ave_loss = 0
-
+            l1, l2, l3, l4 = [], [], [], []
             for i, data in enumerate(dataloader, 0):
 
                 # get the inputs
@@ -78,7 +78,10 @@ class Train(object):
                                 gt_rpn_loc.view(-1, 4),
                                 gt_roi_labels.view(-1),
                                 gt_roi_locs)
-
+                l1.append(loss[0].item())
+                l2.append(loss[1].item())
+                l3.append(loss[2].item())
+                l4.append(loss[3].item())
                 sum_loss = sum(loss)
                 # Keypoint 反向传播异常侦测
                 sum_loss.backward()
@@ -97,10 +100,10 @@ class Train(object):
                     end="\033\rEpoch: {:05d}\tBatch: {:05d}\tLoss: {:>.4f}\t"
                         "Per:{:>.2f}%\tCost:{:.0f}s\tRest:{:.0f}s\t loss {:>.4f} {:>.4f} {:>.4f} {:>.4f}"
                     .format(epoch + 1, i + 1, ave_loss, per, cost_time, rest_time,
-                            loss[0].item(),
-                            loss[1].item(),
-                            loss[2].item(),
-                            loss[3].item()))
+                            sum(l1) / (i + 1),
+                            sum(l2) / (i + 1),
+                            sum(l3) / (i + 1),
+                            sum(l4) / (i + 1)))
             if len(loss_list) == 0:
                 torch.save(net.state_dict(), self.train_plan.save_file)
                 print("\t save weights.")
@@ -155,7 +158,7 @@ class Train(object):
                 else:
                     # KeyPoint 增加正则项，否则模型会输出NAN，
                     params += [{'params': [value], 'lr': lr, 'weight_decay': weight_decay}]
-        return optim.Adam(params)
+        return optim.SGD(params, lr=lr, momentum=0.9)
 
     def get_dataloader(self):
         dataset = ImageDataSet(self.train_plan)
@@ -166,5 +169,7 @@ class Train(object):
 # torch.autograd.set_detect_anomaly(True)
 
 my_plan = TrainPlan("cfg/voc_train.yml")
+my_plan.pre_train = True
+
 trainer = Train(my_plan)
 trainer.__call__()

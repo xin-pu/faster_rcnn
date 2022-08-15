@@ -20,7 +20,9 @@ class ImageDataSet(Dataset):
         self.image_files = pd.read_csv(train_plan.image_index_file, header=None).iloc[:, 0].values
         self.annot_files = self.get_annot_file(self.image_files)
         self.len = self.image_files.__len__()
+        self.enhance = self.train_plan.enhance
         self.transform = ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2)
+        self.input_size = train_plan.input_size
 
     def get_annot_file(self, image_files):
         ann = []
@@ -36,11 +38,12 @@ class ImageDataSet(Dataset):
         image_file = self.image_files[index]
         image = cv2.imread(image_file, cv2.IMREAD_COLOR)
         height, width, _ = image.shape
-        scale_height, scale_width = height / 800., width / 800.
-        image = cv2.resize(image, (800, 800))
+        scale_height, scale_width = height / self.input_size, width / self.input_size
+        image = cv2.resize(image, (self.input_size, self.input_size))
         image = image / 255.
         image = image.transpose(2, 0, 1)
-        image = torch.asarray(image).float()  # opencv 读取维Double 需转float
+        image = torch.asarray(image).float()
+        image = self.transform(image) if self.enhance else torch.asarray(image).float()  # opencv 读取维Double 需转float
 
         annot_file = self.annot_files[index]
         data = pd.read_csv(annot_file, sep=' ', header=None).iloc[:, :].values
@@ -49,6 +52,9 @@ class ImageDataSet(Dataset):
         labels = label_bboxes[..., 0:1]
         bboxes = self.cvt_bbox(label_bboxes[..., 1:], (scale_height, scale_width))
         label_bboxes = torch.concat([labels, bboxes], dim=-1)
+        # KeyPoint Dataset 每个批次的Y。shape一致，
+        #  [N,64,4] 如果BBox 小于64， 其余的Bbox填充-1,训练时需要屏蔽这些非Bbox
+        #  64是根据数据集最大Bbox数量设定的
         bboxes_empty = torch.full((64 - label_bboxes.shape[0], 5), -1)
         label_bboxes = torch.concat([label_bboxes, bboxes_empty])
         return cvt_tensor(image), cvt_tensor(label_bboxes)

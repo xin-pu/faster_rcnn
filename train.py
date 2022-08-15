@@ -7,7 +7,7 @@ import time
 
 from cfg.plan_config import TrainPlan
 from dataset.dataset_generator import ImageDataSet
-from loss.final_loss_v2 import FinalLoss
+from loss.final_loss import FinalLoss
 from main.faster_rcnn import FasterRCNN
 from targets.anchor_creator import AnchorCreator
 from targets.anchor_target_creator import AnchorTargetCreator
@@ -158,7 +158,7 @@ class Train(object):
                 else:
                     # KeyPoint 增加正则项，否则模型会输出NAN，
                     params += [{'params': [value], 'lr': lr, 'weight_decay': weight_decay}]
-        return optim.SGD(params, lr=lr, momentum=0.9)
+        return optim.NAdam(params, lr=lr)
 
     def get_dataloader(self):
         dataset = ImageDataSet(self.train_plan)
@@ -168,8 +168,8 @@ class Train(object):
 # Keypoint 正向传播异常侦测
 # torch.autograd.set_detect_anomaly(True)
 
-my_plan = TrainPlan("cfg/voc_train.yml")
+my_plan = TrainPlan("cfg/raccoon_train.yml")
 my_plan.pre_train = True
 
 trainer = Train(my_plan)
-trainer.__call__()
+trainer()

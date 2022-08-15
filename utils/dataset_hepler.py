@@ -50,12 +50,10 @@ def convert_annotation(image_id):
 
 import os
 
-
-
 path = img_folder  # 文件夹目录
 files = os.listdir(path)
 for f in files:
-    print(img_folder+"\\"+f)
+    print(img_folder + "\\" + f)
     # image_id = f.replace(".jpg", "")
     #
     # convert_annotation(image_id)

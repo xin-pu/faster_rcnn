@@ -158,7 +158,7 @@ class Train(object):
                 else:
                     # KeyPoint 增加正则项，否则模型会输出NAN，
                     params += [{'params': [value], 'lr': lr, 'weight_decay': weight_decay}]
-        return optim.NAdam(params, lr=lr)
+        return optim.SGD(params, lr=lr, momentum=0.9)
 
     def get_dataloader(self):
         dataset = ImageDataSet(self.train_plan)
@@ -168,8 +168,7 @@ class Train(object):
 # Keypoint 正向传播异常侦测
 # torch.autograd.set_detect_anomaly(True)
 
-my_plan = TrainPlan("cfg/raccoon_train.yml")
+my_plan = TrainPlan("cfg/voc_train.yml")
 my_plan.pre_train = True
-
 trainer = Train(my_plan)
 trainer()

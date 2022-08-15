@@ -1,3 +1,5 @@
+import random
+
 import cv2
 import numpy as np
 import torch
@@ -75,7 +77,7 @@ class Predict(object):
             mask = prob_l > 0.7
             cls_bbox_l = cls_bbox_l[mask]
             prob_l = prob_l[mask]
-            keep = nms(cls_bbox_l, prob_l, 0.2)
+            keep = nms(cls_bbox_l, prob_l, 0.3)
             bbox.append(cls_bbox_l[keep].detach().cpu().numpy())
             label.append((la - 1) * np.ones((len(keep),)))
             score.append(prob_l[keep].detach().cpu().numpy())
@@ -105,30 +107,34 @@ class Predict(object):
         image = image.cuda().unsqueeze(0)
         return image, (scale_height, scale_width)
 
+    def get_predict_image(self, test_file, bbox, label, score):
+        image_s = cv2.imread(test_file)
+        colors = []
+        for i in range(self.n_class):
+            colors.append((random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255)))
 
-def get_predict_image(test_file, bbox, label, score):
-    image_s = cv2.imread(test_file)
+        i = 0
+        for box in bbox:
+            color = colors[label[i]]
+            min_max = box
+            pt1 = (int(min_max[0]), int(min_max[1]))
+            pt2 = (int(min_max[2]), int(min_max[3]))
+            cv2.rectangle(image_s, pt1, pt2, color, 1)
+            class_name = cfg.labels[label[i]]
+            prob = score[i]
 
-    i = 0
-    for box in bbox:
-        min_max = box
-        pt1 = (int(min_max[0]), int(min_max[1]))
-        pt2 = (int(min_max[2]), int(min_max[3]))
-        cv2.rectangle(image_s, pt1, pt2, (255, 255, 0), 1)
-        class_name = cfg.labels[label[i]]
-        prob = score[i]
-
-        cv2.putText(image_s, "{0} {1:.2f}%".format(class_name, prob * 100), pt1, cv2.FONT_ITALIC, 1, (0, 0, 255), 1,
-                    lineType=cv2.LINE_AA)
-        i += 1
-    return image_s
+            bottom_left = (int(min_max[0]), int(min_max[3] - 4))
+            cv2.putText(image_s, "{0} {1:.3f}".format(class_name, prob), bottom_left, cv2.FONT_ITALIC, 0.5, color, 2,
+                        lineType=cv2.LINE_8)
+            i += 1
+        return image_s
 
 
-cfg = TrainPlan("cfg/raccoon_train.yml")
+cfg = TrainPlan("cfg/voc_train.yml")
 predictor = Predict(cfg)
-testfile = r"E:\OneDrive - II-VI Incorporated\Pictures\Saved Pictures\R2.jfif"
+testfile = r"F:\PASCALVOC\VOC2007_Val\JPEGImages\001988.jpg"
 res = predictor(testfile)
 
-predict_image = get_predict_image(testfile, res[0], res[1], res[2])
+predict_image = predictor.get_predict_image(testfile, res[0], res[1], res[2])
 cv2.imshow("Result", predict_image)
 cv2.waitKey(5000)

@@ -15,9 +15,9 @@ loc_normalize_mean: [ 0., 0., 0., 0. ]
 loc_normalize_std: [ 0.1, 0.1, 0.2, 0.2 ]
 
 # training
-epoch: 15
-batch_size: 1
-learning_rate: 0.001
+epoch: 100
+batch_size: 4
+learning_rate: 0.0001
 
 val_split: 0.1
 
